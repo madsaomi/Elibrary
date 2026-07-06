@@ -140,7 +140,7 @@ def issue_textbooks(school, student, textbook_ids, issued_by):
 @transaction.atomic
 def return_textbooks(loan_ids, returned_by, forced=False):
     from apps.gamification.services import add_xp, update_streak, award_comeback_bonus
-    loans = TextbookLoan.objects.filter(id__in=loan_ids).select_related('textbook')
+    loans = TextbookLoan.objects.filter(id__in=loan_ids).select_related('textbook', 'student', 'school')
     stock_ids = [(loan.school_id, loan.textbook_id) for loan in loans]
     stocks = list(TextbookStock.objects.filter(school_id__in={s for s,_ in stock_ids}, textbook_id__in={t for _,t in stock_ids}).select_for_update())
     stock_map = {(s.school_id, s.textbook_id): s for s in stocks}
@@ -181,7 +181,7 @@ def issue_books(school, user, book_ids, issued_by):
 @transaction.atomic
 def return_books(loan_ids, forced=False):
     from apps.gamification.services import add_xp, update_streak, award_comeback_bonus
-    loans = RegularBookLoan.objects.filter(id__in=loan_ids).select_related('book')
+    loans = RegularBookLoan.objects.filter(id__in=loan_ids).select_related('book', 'user', 'school')
     book_ids = [loan.book_id for loan in loans]
     books = list(RegularBook.objects.filter(id__in=book_ids).select_for_update())
     book_map = {b.id: b for b in books}

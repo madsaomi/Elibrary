@@ -88,6 +88,12 @@ def accept_transfer(user_id, to_school, initiated_by):
     else:
         xp_after = 0
 
+    from apps.gamification.models import Streak
+    streak = Streak.objects.filter(user=user).first()
+    if streak:
+        streak.school = to_school
+        streak.save(update_fields=['school'])
+
     transfer.to_school = to_school
     transfer.status = TransferLog.Status.COMPLETED
     transfer.completed_at = timezone.now()

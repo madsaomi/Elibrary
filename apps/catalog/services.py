@@ -28,8 +28,21 @@ def add_textbook_stock(school, textbook, total_copies):
 
 @transaction.atomic
 def create_regular_book(school, title, author='', category=None, total_copies=1, cover=None):
-    return RegularBook.objects.create(
+    book, created = RegularBook.objects.get_or_create(
         school=school, title=title, author=author,
-        category=category, total_copies=total_copies,
-        available_copies=total_copies, cover=cover,
+        defaults={
+            'category': category,
+            'total_copies': total_copies,
+            'available_copies': total_copies,
+            'cover': cover,
+        },
     )
+    if not created:
+        book.total_copies += total_copies
+        book.available_copies += total_copies
+        if cover:
+            book.cover = cover
+        if category:
+            book.category = category
+        book.save()
+    return book, created

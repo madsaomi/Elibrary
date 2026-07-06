@@ -133,10 +133,29 @@ tests/
 - `apps/core/services.py` — grade export
 
 **Не исправлено (низкий приоритет):**
-- N+1 запросы в return_textbooks (missing select_related)
-- Streak OneToOneField конфликтует со school FK при переводе ученика
-- create_regular_book нет дедупликации
-- generate_challenge_questions нет timeout на API вызов
+- ~~N+1 запросы в return_textbooks~~ ✅
+- ~~Streak OneToOneField конфликтует со school FK~~ ✅
+- ~~create_regular_book нет дедупликации~~ ✅
+- ~~generate_challenge_questions нет timeout~~ ✅
+
+### ✅ Завершённая задача #12 — Исправление последних 4 багов
+**Дата:** 2026-07-07
+**Проблема:** Оставались 4 низкоприоритетных бага: N+1 в return, конфликт Streak FK, дедупликация книг, timeout API.
+
+**Что было сделано:**
+- `[x]` **return_textbooks** — добавлен select_related('textbook', 'student', 'school')
+- `[x]` **return_books** — добавлен select_related('book', 'user', 'school')
+- `[x]` **accept_transfer** — обновление streak.school при переводе ученика
+- `[x]` **create_regular_book** — переписан на get_or_create с обновлением остатков
+- `[x]` **generate_challenge_questions** — добавлен timeout=60 на Gemini API вызов
+
+**Затронутые файлы:**
+- `apps/loans/services.py` — select_related в return_textbooks + return_books
+- `apps/schools/transfer_service.py` — streak update в accept_transfer
+- `apps/catalog/services.py` — create_regular_book дедупликация
+- `apps/gamification/services.py` — timeout API
+
+**Статус:** Все найденные баги исправлены (29/29). Аудит завершён.
 
 ---
 

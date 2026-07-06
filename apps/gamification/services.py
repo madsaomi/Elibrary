@@ -191,6 +191,7 @@ def generate_challenge_questions(grade_number, language):
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
         ),
+        timeout=60,
     )
     
     text = response.text.strip()
