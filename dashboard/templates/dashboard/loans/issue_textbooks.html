@@ -1,0 +1,32 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% block title %}{% trans "Выдача учебников — Библиотечная система" %}{% endblock %}
+{% block dashboard_content %}
+<div class="page-header">
+    <h1><i data-lucide="book-open" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Выдача учебников" %}</h1>
+    <a href="{% url 'dashboard:bulk_issue' %}" class="btn btn-accent"><i data-lucide="package" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Выдать классу" %}</a>
+</div>
+<div class="card overflow-x-auto p-0">
+    <table>
+        <thead>
+            <tr><th>{% trans "Ученик" %}</th><th>{% trans "Класс" %}</th><th class="text-center">{% trans "Выдать комплект" %}</th><th class="text-center">{% trans "Принять" %}</th></tr>
+        </thead>
+        <tbody>
+            {% for s in students %}
+            <tr>
+                <td>{{ s.last_name }} {{ s.first_name }}</td>
+                <td>{{ s.grade|default:'-' }}</td>
+                <td class="text-center">
+                    <a href="{% url 'dashboard:issue_textbooks_set' student_id=s.id %}" class="btn btn-primary btn-sm"><i data-lucide="book-open" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Выдать" %}</a>
+                </td>
+                <td class="text-center">
+                    <a href="{% url 'dashboard:return_textbooks' student_id=s.id %}" class="btn btn-outline btn-sm"><i data-lucide="log-in" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Принять" %}</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center text-muted p-2">{% trans "Нет учеников" %}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

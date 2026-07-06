@@ -1,0 +1,46 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% block title %}{% trans "Массовая выдача учителю" %}{% endblock %}
+{% block dashboard_content %}
+<h1 class="mb-3"><i data-lucide="user-check" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Выдача учебников по нескольким классам" %}</h1>
+<form method="post">
+    {% csrf_token %}
+    <div class="card max-w-600">
+        {% if teachers %}
+        <div class="mb-2">
+            <label class="form-label">{% trans "Учитель" %}</label>
+            <select name="teacher_id" class="form-input" required>
+                {% for t in teachers %}
+                <option value="{{ t.id }}">{{ t.last_name }} {{ t.first_name }} ({{ t.subject }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        <div class="mb-2">
+            <label class="form-label">{% trans "Классы" %}</label>
+            <div class="overflow-auto" style="max-height: 150px; border: 1px solid var(--border); border-radius: var(--radius); padding: 0.5rem;">
+                {% for cls in classes %}
+                <label class="flex items-center gap-sm p-1" style="font-size: 0.875rem;">
+                    <input type="checkbox" name="class_ids" value="{{ cls.id }}">
+                    {{ cls }}
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">{% trans "Учебники (на 7 дней)" %}</label>
+            <div class="overflow-auto" style="max-height: 200px; border: 1px solid var(--border); border-radius: var(--radius); padding: 0.5rem;">
+                {% for tb in textbooks %}
+                <label class="flex items-center gap-sm p-1" style="font-size: 0.875rem;">
+                    <input type="checkbox" name="textbook_ids" value="{{ tb.id }}">
+                    {{ tb.title }} ({{ tb.subject }}, {{ tb.grade_number }} {% trans "кл." %})
+                </label>
+                {% empty %}
+                <div class="empty-state" style="padding: 2rem;"><div class="icon" style="font-size: 2rem;"><i data-lucide="book-open" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i></div><h3>{% trans "Нет учебников" %}</h3></div>
+                {% endfor %}
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary"><i data-lucide="log-out" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Выдать одним QR" %}</button>
+    </div>
+</form>
+{% endblock %}

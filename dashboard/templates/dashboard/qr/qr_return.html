@@ -1,0 +1,57 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% load static %}
+{% block title %}{% trans "QR для возврата" %}{% endblock %}
+{% block dashboard_content %}
+<div class="qr-fullscreen" id="qrContainer">
+    <div class="qr-fullscreen-inner">
+        <h1 class="qr-title"><i data-lucide="smartphone" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "QR-код для возврата" %}</h1>
+        <p class="qr-count">{% blocktranslate %}Выбранных позиций: <strong>{{ count }}</strong>{% endblocktranslate %}</p>
+        <p class="qr-count">{% blocktranslate %}После возврата останется: <strong>{{ remaining }}</strong>{% endblocktranslate %}</p>
+        <div id="qrCode" class="qr-code-wrap"></div>
+        <div id="qrTimer" class="qr-timer" data-exp="{{ exp }}">02:00</div>
+        <p class="qr-hint">{% trans "Покажите этот код библиотекарю для сканирования" %}</p>
+    </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script>
+var currentToken = '{{ token|escapejs }}';
+var qrInstance;
+
+function renderQR(token) {
+    var el = document.getElementById('qrCode');
+    el.innerHTML = '';
+    qrInstance = new QRCode(el, { text: token, width: 280, height: 280 });
+}
+renderQR(currentToken);
+
+function updateTimer() {
+    var el = document.getElementById('qrTimer');
+    var exp = parseInt(el.dataset.exp) * 1000;
+    var now = Date.now();
+    var diff = Math.max(0, exp - now);
+    var m = Math.floor(diff / 60000);
+    var s = Math.floor((diff % 60000) / 1000);
+    el.textContent = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    if (diff <= 0) { el.textContent = '00:00'; }
+}
+setInterval(updateTimer, 1000);
+updateTimer();
+
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+    if (evt.detail.target && evt.detail.target.id === 'qrRefreshTarget') {
+        var newToken = evt.detail.target.querySelector('[data-token]');
+        if (newToken) {
+            currentToken = newToken.dataset.token;
+            renderQR(currentToken);
+            var timerEl = document.getElementById('qrTimer');
+            var newExp = newToken.dataset.exp;
+            if (newExp) { timerEl.dataset.exp = newExp; }
+        }
+    }
+});
+</script>
+<div id="qrRefreshTarget" hx-get="{% url 'dashboard:qr_issue_refresh' %}" hx-trigger="every 30s" hx-swap="innerHTML"></div>
+{% endblock %}

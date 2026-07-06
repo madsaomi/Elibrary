@@ -1,0 +1,49 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% block title %}{% blocktranslate %}Принять учебники — {{ student.last_name }} {{ student.first_name }}{% endblocktranslate %}{% endblock %}
+{% block dashboard_content %}
+<div class="fade-in-up">
+<div class="page-header">
+    <h1><i data-lucide="log-in" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% blocktranslate %}Принять учебники — {{ student.last_name }} {{ student.first_name }}{% endblocktranslate %}</h1>
+</div>
+<p class="text-muted mb-4" style="font-size: 0.95rem;">
+    <strong>{{ student.last_name }} {{ student.first_name }}</strong> · {{ student.grade|default:_('без класса') }}
+</p>
+<form method="post" onsubmit="return confirm('{% trans "Подтвердите приём учебников" %}')">
+    {% csrf_token %}
+    <div class="table-wrap mb-4">
+        <table>
+            <thead>
+                <tr><th>{% trans "Учебник" %}</th><th>{% trans "Выдан" %}</th><th>{% trans "Срок" %}</th><th class="text-center">{% trans "Сдал" %}</th></tr>
+            </thead>
+            <tbody>
+                {% for loan in active_loans %}
+                <tr>
+                    <td><strong>{{ loan.textbook.title }}</strong></td>
+                    <td>{{ loan.issued_at|date:'d.m.Y' }}</td>
+                    <td>{{ loan.due_date|date:'d.m.Y' }}</td>
+                    <td class="text-center">
+                        <input type="checkbox" name="loan_ids" value="{{ loan.id }}">
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-muted p-2">{% trans "Нет активных выдач" %}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="flex items-center gap-md mb-4">
+        <button type="submit" class="btn btn-primary"><i data-lucide="log-in" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Принять выбранные" %}</button>
+    </div>
+    
+    <div class="card p-3" style="background: var(--color-danger-light); border: 1px solid var(--danger);">
+        <label class="flex items-center gap-sm mb-1" style="font-size: 0.95rem;">
+            <input type="checkbox" name="forced" value="1" onchange="this.form.querySelector('button[type=submit]').textContent = this.checked ? '<i data-lucide="alert-triangle" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Принудительный возврат" %}' : '<i data-lucide="log-in" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Принять выбранные" %}'">
+            <strong style="color: var(--danger);">{% trans "Принудительный возврат" %}</strong>
+        </label>
+        <p class="text-muted text-sm m-0">{% trans "Используется только когда самообслуживание через QR-код невозможно. Операция будет помечена в логе." %}</p>
+    </div>
+</form>
+</div>
+{% endblock %}

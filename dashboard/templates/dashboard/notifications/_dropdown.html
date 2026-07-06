@@ -1,0 +1,12 @@
+{% load i18n %}
+<div class="notif-dropdown">
+    {% for n in notifications %}
+    <a href="{{ n.link|default:'#' }}" class="notif-item {% if not n.is_read %}unread{% endif %}">
+        <div class="notif-type">{{ n.get_type_display }}</div>
+        <div class="notif-msg">{{ n.message }}</div>
+        <div class="notif-time">{{ n.created_at|timesince }}</div>
+    </a>
+    {% empty %}
+    <div class="notif-empty">Нет уведомлений</div>
+    {% endfor %}
+</div>

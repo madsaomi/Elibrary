@@ -1,0 +1,31 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% block title %}{% trans "Книги — Библиотечная система" %}{% endblock %}
+{% block dashboard_content %}
+<div class="page-header"><h1><i data-lucide="book-open" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Книги" %}</h1><a href="{% url 'dashboard:book_create' %}" class="btn btn-primary">+ {% trans "Добавить" %}</a></div>
+<form method="get" class="flex gap-sm mb-2">
+    <input type="text" name="q" value="{{ q }}" placeholder="{% trans 'Поиск по названию или автору...' %}" class="form-input flex-1">
+    <button class="btn btn-primary" type="submit">{% trans "Поиск" %}</button>
+</form>
+<div class="card overflow-x-auto">
+    <table>
+        <thead>
+            <tr><th></th><th>{% trans "Название" %}</th><th>{% trans "Автор" %}</th><th>{% trans "Категория" %}</th><th class="text-right">{% trans "Всего" %}</th><th class="text-right">{% trans "Доступно" %}</th></tr>
+        </thead>
+        <tbody>
+            {% for book in books %}
+            <tr>
+                <td>{% if book.cover %}<img src="{{ book.cover.url }}" alt="" class="cover-thumb">{% else %}<span class="cover-placeholder"><i data-lucide="book-open" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i></span>{% endif %}</td>
+                <td>{{ book.title }}</td>
+                <td>{{ book.author|default:'-' }}</td>
+                <td>{{ book.category.name|default:'-' }}</td>
+                <td class="text-right">{{ book.total_copies }}</td>
+                <td class="text-right">{{ book.available_copies }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center text-muted p-2">{% trans "Нет книг" %}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

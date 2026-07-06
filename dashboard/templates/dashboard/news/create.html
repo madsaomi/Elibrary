@@ -1,0 +1,27 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% block title %}{% trans "Создать новость" %}{% endblock %}
+{% block dashboard_content %}
+<h1 class="mb-3">📝 {% trans "Создать новость" %}</h1>
+<div class="card max-w-600">
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-2">
+            <label class="form-label">{% trans "Заголовок" %}</label>
+            <input type="text" name="title" required class="form-input">
+        </div>
+        <div class="mb-2">
+            <label class="form-label">{% trans "Содержание" %}</label>
+            <textarea name="content" rows="6" required class="form-textarea"></textarea>
+        </div>
+        <div class="mb-2">
+            <label>
+                <input type="checkbox" name="is_published" value="1" checked>
+                {% trans "Опубликовать сразу" %}
+            </label>
+        </div>
+        <button type="submit" class="btn btn-primary">{% trans "Сохранить" %}</button>
+        <a href="{% url 'dashboard:news_list' %}" class="btn btn-outline">{% trans "Отмена" %}</a>
+    </form>
+</div>
+{% endblock %}

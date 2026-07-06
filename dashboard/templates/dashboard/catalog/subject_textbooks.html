@@ -1,0 +1,44 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% block title %}Назначение учебников классам{% endblock %}
+{% block dashboard_content %}
+<h1 class="mb-3"><i data-lucide="book-marked" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> Назначение учебников по предметам</h1>
+<div class="card max-w-500 mb-3">
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-15">
+            <label class="form-label">Класс</label>
+            <select name="class_id" class="form-input" required>
+                {% for cls in classes %}
+                <option value="{{ cls.id }}">{{ cls }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-15">
+            <label class="form-label">Предмет</label>
+            <input type="text" name="subject" class="form-input" placeholder="Математика" required>
+        </div>
+        <div class="mb-15">
+            <label class="form-label">Учебник</label>
+            <select name="textbook_id" class="form-input" required>
+                {% for tb in textbooks %}
+                <option value="{{ tb.id }}">{{ tb.title }} ({{ tb.subject }}, {{ tb.grade_number }} кл.)</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary"><i data-lucide="plus" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> Назначить</button>
+    </form>
+</div>
+<div class="card overflow-x-auto">
+    <table>
+        <thead><tr><th>Класс</th><th>Предмет</th><th>Учебник</th></tr></thead>
+        <tbody>
+            {% for a in assignments %}
+            <tr><td>{{ a.school_class }}</td><td>{{ a.subject }}</td><td>{{ a.textbook.title }}</td></tr>
+            {% empty %}
+            <tr><td colspan="3" class="text-muted">Нет назначений</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

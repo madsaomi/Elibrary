@@ -1,0 +1,126 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% block title %}{% trans "Инвентаризация — Библиотечная система" %}{% endblock %}
+{% block dashboard_content %}
+<h1 class="mb-3">{% trans "Инвентаризация" %}</h1>
+
+{% if stats %}
+<div class="stats-grid mb-4">
+    <div class="card-stat">
+        <div class="icon"><i data-lucide="library" style="width:2rem;height:2rem;"></i></div>
+        <div class="value" style="font-family: var(--font-display);">{{ stats.regular_books.total|default:0 }}</div>
+        <div class="label">{% trans "Книг всего" %}</div>
+    </div>
+    <div class="card-stat">
+        <div class="icon"><i data-lucide="book-open" style="width:2rem;height:2rem;"></i></div>
+        <div class="value" style="font-family: var(--font-display);">{{ stats.textbook_stocks.total|default:0 }}</div>
+        <div class="label">{% trans "Учебников всего" %}</div>
+    </div>
+    <div class="card-stat">
+        <div class="icon"><i data-lucide="graduation-cap" style="width:2rem;height:2rem;"></i></div>
+        <div class="value" style="font-family: var(--font-display);">{{ stats.active_loans|default:0 }}</div>
+        <div class="label">{% trans "Активных читателей" %}</div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card mb-4">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem;">
+        <h2 class="mb-0">{% trans "Просроченные выдачи" %}</h2>
+        <div class="flex items-center gap-sm flex-wrap">
+            <select class="form-select" id="debtorFilter" style="width: auto;" onchange="filterDebtors()">
+                <option value="all">{% trans "Все должники" %}</option>
+                <option value="overdue">{% trans "Просрочено" %}</option>
+                <option value="due-soon">{% trans "Скоро срок" %}</option>
+            </select>
+            <button class="btn btn-outline btn-sm" onclick="exportDebtors()">{% trans "Экспорт в Excel" %}</button>
+        </div>
+    </div>
+    <div class="overflow-x-auto">
+        <table id="debtorTable">
+            <thead>
+                <tr><th>{% trans "Ученик" %}</th><th>{% trans "Учебник" %}</th><th>{% trans "Выдан" %}</th><th>{% trans "Срок" %}</th><th>{% trans "Статус" %}</th></tr>
+            </thead>
+            <tbody>{% now "Y-m-d" as today_str %}
+                {% for loan in overdue_loans %}
+                <tr class="debtor-row" data-due="{{ loan.due_date|date:'Y-m-d' }}">
+                    <td>{{ loan.student.last_name }} {{ loan.student.first_name }}</td>
+                    <td>{{ loan.textbook.title }}</td>
+                    <td>{{ loan.issued_at|date:'d.m.Y' }}</td>
+                    <td class="{% if loan.due_date|date:'Y-m-d' < today_str %}color-danger{% else %}color-warning{% endif %}">{{ loan.due_date|date:'d.m.Y' }}</td>
+                    <td><span class="badge {% if loan.due_date|date:'Y-m-d' < today_str %}badge-danger{% elif loan.due_date|date:'Y-m-d' == today_str %}badge-danger{% else %}badge-warning{% endif %}">{% if loan.due_date|date:'Y-m-d' < today_str %}{% trans "Просрочено" %}{% else %}{% trans "Скоро" %}{% endif %}</span></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted p-2">{% trans "Нет просрочек" %}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="grid-2 mb-4">
+    <div class="card">
+        <h3>{% trans "Динамика по месяцам" %}</h3>
+        <canvas id="monthlyChart" style="max-height: 250px;"></canvas>
+    </div>
+    <div class="card">
+        <h3>{% trans "Распределение по категориям" %}</h3>
+        <canvas id="categoryChart" style="max-height: 250px;"></canvas>
+    </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script>
+fetch('{% url "xptransaction-list" %}').then(r => r.json()).then(data => {
+    new Chart(document.getElementById('monthlyChart'), {
+        type: 'bar',
+        data: {
+            labels: ['{% trans "Янв" %}','{% trans "Фев" %}','{% trans "Мар" %}','{% trans "Апр" %}','{% trans "Май" %}','{% trans "Июн" %}','{% trans "Июл" %}','{% trans "Авг" %}','{% trans "Сен" %}','{% trans "Окт" %}','{% trans "Ноя" %}','{% trans "Дек" %}'],
+            datasets: [{
+                label: '{% trans "Выдачи" %}',
+                data: [{{ stats.students|default:0 }}, {{ stats.textbook_stocks.total|default:0 }}, {{ stats.regular_books.total|default:0 }}, {{ stats.active_loans|default:0 }}, 0, 0, 0, 0, 0, 0, 0, 0],
+                backgroundColor: 'rgba(15, 107, 92, 0.7)'
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
+    new Chart(document.getElementById('categoryChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['{% trans "Учебники" %}', '{% trans "Книги" %}', '{% trans "Выдано" %}'],
+            datasets: [{
+                data: [{{ stats.textbook_stocks.total|default:0 }}, {{ stats.regular_books.total|default:0 }}, {{ stats.active_loans|default:0 }}],
+                backgroundColor: ['#0F6B5C', '#E0A030', '#2D4A6B']
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+    });
+});
+function filterDebtors() {
+    var val = document.getElementById('debtorFilter').value;
+    document.querySelectorAll('.debtor-row').forEach(function(row) {
+        var due = new Date(row.getAttribute('data-due'));
+        var now = new Date();
+        var diff = Math.ceil((due - now) / (1000*60*60*24));
+        if (val === 'all') { row.style.display = ''; }
+        else if (val === 'overdue') { row.style.display = diff < 0 ? '' : 'none'; }
+        else if (val === 'due-soon') { row.style.display = (diff >= 0 && diff <= 7) ? '' : 'none'; }
+    });
+}
+function exportDebtors() {
+    var csv = '\uFEFF';
+    var rows = document.querySelectorAll('#debtorTable tbody tr');
+    csv += '"{% trans "Ученик" %}","{% trans "Учебник" %}","{% trans "Выдан" %}","{% trans "Срок" %}","{% trans "Статус" %}"\n';
+    rows.forEach(function(row) {
+        if (row.style.display !== 'none') {
+            var cols = row.querySelectorAll('td');
+            csv += '"' + Array.from(cols).map(function(c) { return c.textContent.trim(); }).join('","') + '"\n';
+        }
+    });
+    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    var link = document.createElement('a'); link.href = URL.createObjectURL(blob);
+    link.download = 'debtors.csv'; link.click();
+}
+</script>
+{% endblock %}

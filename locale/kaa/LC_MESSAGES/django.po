@@ -1,0 +1,67 @@
+# Karakalpak translation for School Library System
+# Copyright (C) 2026
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-05 17:00+0500\n"
+"PO-Revision-Date: 2026-07-05 17:00+0500\n"
+"Last-Translator: \n"
+"Language-Team: Karakalpak\n"
+"Language: kaa\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Вход в систему"
+msgstr "Sistemag'a kiriw"
+
+msgid "Логин"
+msgstr "Login"
+
+msgid "Пароль"
+msgstr "Parol"
+
+msgid "Войти"
+msgstr "Kiriw"
+
+msgid "Главная"
+msgstr "Bas bet"
+
+msgid "Профиль"
+msgstr "Profil"
+
+msgid "Выйти"
+msgstr "Shig'iw"
+
+msgid "Пользователи"
+msgstr "Paydalanıwshılar"
+
+msgid "Учебники"
+msgstr "Sabaqlıqlar"
+
+msgid "Книги"
+msgstr "Kitoblar"
+
+msgid "Библиотечная система"
+msgstr "Kitapxana sisteması"
+
+msgid "Добро пожаловать"
+msgstr "Xosh keldińiz"
+
+msgid "Неверный логин или пароль"
+msgstr "Noto'g'ri login yamasa parol"
+
+msgid "Доступ запрещён"
+msgstr "Kiriw qadag'an etilgen"
+
+msgid "Ошибка"
+msgstr "Qate"
+
+msgid "Страница не найдена"
+msgstr "Sahifa tabılmadı"
+
+msgid "На главную"
+msgstr "Bas betke"

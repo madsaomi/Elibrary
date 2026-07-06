@@ -1,0 +1,67 @@
+# Uzbek translation for School Library System
+# Copyright (C) 2026
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-05 17:00+0500\n"
+"PO-Revision-Date: 2026-07-05 17:00+0500\n"
+"Last-Translator: \n"
+"Language-Team: Uzbek\n"
+"Language: uz\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Вход в систему"
+msgstr "Tizimga kirish"
+
+msgid "Логин"
+msgstr "Login"
+
+msgid "Пароль"
+msgstr "Parol"
+
+msgid "Войти"
+msgstr "Kirish"
+
+msgid "Главная"
+msgstr "Bosh sahifa"
+
+msgid "Профиль"
+msgstr "Profil"
+
+msgid "Выйти"
+msgstr "Chiqish"
+
+msgid "Пользователи"
+msgstr "Foydalanuvchilar"
+
+msgid "Учебники"
+msgstr "Darsliklar"
+
+msgid "Книги"
+msgstr "Kitoblar"
+
+msgid "Библиотечная система"
+msgstr "Kutubxona tizimi"
+
+msgid "Добро пожаловать"
+msgstr "Xush kelibsiz"
+
+msgid "Неверный логин или пароль"
+msgstr "Noto'g'ri login yoki parol"
+
+msgid "Доступ запрещён"
+msgstr "Kirish taqiqlangan"
+
+msgid "Ошибка"
+msgstr "Xato"
+
+msgid "Страница не найдена"
+msgstr "Sahifa topilmadi"
+
+msgid "На главную"
+msgstr "Bosh sahifaga"

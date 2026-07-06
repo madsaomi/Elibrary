@@ -1,0 +1,192 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% block title %}{% trans "Челлендж" %}{% endblock %}
+{% block dashboard_content %}
+<div class="fade-in-up">
+<div id="challengeStart" class="card text-center" style="max-width: 500px; margin: 4rem auto; padding: 3rem 2rem;">
+    <div style="font-size: 4rem; margin-bottom: 1.5rem;"><i data-lucide="brain" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i></div>
+    <h2 class="mb-2">{% trans "Недельный челлендж" %}</h2>
+    <p class="text-muted mb-4" style="font-size: 1.1rem;">{% trans "15 минут на 15 вопросов" %}</p>
+    <button class="btn btn-accent btn-lg" style="width: 100%;" onclick="startChallenge()">{% trans "Начать челлендж" %}</button>
+</div>
+
+<div id="challengeQuestions" style="display: none; max-width: 700px; margin: 0 auto;">
+    <div class="page-header" style="margin-bottom: 2rem;">
+        <h1 class="mb-0">{% trans "Челлендж" %}</h1>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <span class="text-muted" id="questionCounter">{% trans "Вопрос" %} 1 / {{ questions|length }}</span>
+            <span id="timer" class="nums" style="font-size: 1.25rem; font-weight: 700; padding: 0.5rem 1rem; border-radius: var(--radius-full); background: var(--color-primary-light); color: var(--color-primary-dark); border: 2px solid var(--color-primary-light); transition: all 0.3s ease;">15:00</span>
+        </div>
+    </div>
+    
+    <div id="questions">
+        {% for q in questions %}
+        <div class="card mb-4 question-card" data-idx="{{ forloop.counter0 }}" style="{% if forloop.counter0 > 0 %}display: none;{% endif %} padding: 2rem;">
+            <p class="mb-4" style="font-weight: 600; font-size: 1.25rem; line-height: 1.5;">{{ forloop.counter }}. {{ q.question }}</p>
+            <div class="flex flex-col gap-md">
+                {% for opt in q.options %}
+                <button class="btn btn-outline answer-btn" style="display: block; width: 100%; text-align: left; padding: 1.25rem; font-size: 1.05rem; border-radius: var(--radius-lg); transition: all 0.2s ease;" onclick="selectAnswer({{ forloop.parentloop.counter0 }}, {{ forloop.counter0 }}, this)" type="button">
+                    {{ opt }}
+                </button>
+                {% empty %}
+                <p class="text-muted">{% trans "Нет вариантов" %}</p>
+                {% endfor %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="card text-center">
+            <p class="text-muted">{% trans "Нет вопросов" %}</p>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="flex justify-between mt-4">
+        <button class="btn btn-outline" id="prevBtn" onclick="prevQuestion()" style="display: none; padding-left: 2rem; padding-right: 2rem;">{% trans "Назад" %}</button>
+        <div style="flex-grow: 1;"></div>
+        <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="padding-left: 2rem; padding-right: 2rem;">{% trans "Далее" %}</button>
+        <button class="btn btn-accent" id="finishBtn" onclick="finishChallenge()" style="display: none; padding-left: 2rem; padding-right: 2rem;">{% trans "Завершить" %}</button>
+    </div>
+</div>
+
+<div id="challengeResult" style="display: none;">
+    <div class="card text-center p-4 fade-in-up" style="max-width: 500px; margin: 4rem auto;">
+        <div style="font-size: 4rem; margin-bottom: 1.5rem;">🎉</div>
+        <h2 class="mb-2">{% trans "Челлендж завершён!" %}</h2>
+        <div class="result-score" style="font-size: 2.5rem; font-weight: 800; color: var(--color-primary); margin: 1rem 0;"></div>
+        <a href="{% url 'dashboard:home' %}" class="btn btn-primary mt-4">{% trans "Вернуться на главную" %}</a>
+    </div>
+</div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+const attemptId = '{{ attempt_id }}';
+const timeLimit = 15 * 60;
+let timeLeft = timeLimit;
+let timerInterval;
+let currentIdx = 0;
+const totalQuestions = {{ questions|length }};
+
+function startChallenge() {
+    document.getElementById('challengeStart').style.display = 'none';
+    document.getElementById('challengeQuestions').style.display = 'block';
+    startTimer();
+}
+
+function startTimer() {
+    timerInterval = setInterval(function() {
+        timeLeft--;
+        var mins = Math.floor(timeLeft / 60);
+        var secs = timeLeft % 60;
+        var timerEl = document.getElementById('timer');
+        timerEl.textContent = mins + ':' + String(secs).padStart(2, '0');
+        if (timeLeft <= 120) {
+            timerEl.style.background = timeLeft <= 30 ? 'var(--color-danger-light)' : 'var(--color-warning-light)';
+            timerEl.style.borderColor = timeLeft <= 30 ? 'var(--color-danger-light)' : 'var(--color-warning-light)';
+            timerEl.style.color = timeLeft <= 30 ? 'var(--color-danger)' : 'var(--color-warning)';
+        }
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            finishChallenge();
+        }
+        if (timeLeft % 10 === 0) {
+            checkTimeout();
+        }
+    }, 1000);
+}
+
+function selectAnswer(idx, answer, btn) {
+    document.querySelectorAll('.answer-btn').forEach(function(b) { 
+        b.classList.remove('btn-primary'); 
+        b.classList.add('btn-outline'); 
+    });
+    btn.classList.remove('btn-outline');
+    btn.classList.add('btn-primary');
+    saveAnswer(idx, answer);
+}
+
+function saveAnswer(idx, answer) {
+    fetch('/api/v1/challenge-attempts/' + attemptId + '/answer/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+        body: JSON.stringify({question_idx: idx, answer: answer})
+    });
+}
+
+function showQuestion(idx) {
+    document.querySelectorAll('.question-card').forEach(function(el, i) {
+        if (i === idx) {
+            el.style.display = 'block';
+            el.classList.add('fade-in-up');
+        } else {
+            el.style.display = 'none';
+            el.classList.remove('fade-in-up');
+        }
+    });
+    currentIdx = idx;
+    document.getElementById('questionCounter').textContent = '{% trans "Вопрос" %} ' + (idx + 1) + ' / ' + totalQuestions;
+    document.getElementById('prevBtn').style.display = idx > 0 ? 'inline-flex' : 'none';
+    document.getElementById('nextBtn').style.display = idx < totalQuestions - 1 ? 'inline-flex' : 'none';
+    document.getElementById('finishBtn').style.display = idx === totalQuestions - 1 ? 'inline-flex' : 'none';
+}
+
+function nextQuestion() {
+    if (currentIdx < totalQuestions - 1) showQuestion(currentIdx + 1);
+}
+
+function prevQuestion() {
+    if (currentIdx > 0) showQuestion(currentIdx - 1);
+}
+
+function finishChallenge() {
+    clearInterval(timerInterval);
+    fetch('/api/v1/challenge-attempts/' + attemptId + '/finish/', {
+        method: 'POST',
+        headers: {'X-CSRFToken': '{{ csrf_token }}'},
+    }).then(function(r) { return r.json(); }).then(function(data) {
+        document.getElementById('challengeQuestions').style.display = 'none';
+        document.getElementById('challengeResult').style.display = 'block';
+        document.querySelector('.result-score').textContent =
+            data.score + '/' + (data.challenge ? data.challenge.questions.length : totalQuestions);
+    });
+}
+
+function checkTimeout() {
+    fetch('/api/v1/challenge-attempts/' + attemptId + '/check_timeout/', {
+        method: 'POST',
+        headers: {'X-CSRFToken': '{{ csrf_token }}'},
+    }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.is_completed) {
+            clearInterval(timerInterval);
+            location.reload();
+        }
+    });
+}
+
+(function init() {
+    {% if attempt_id %}/* Resume from server */
+    fetch('/api/v1/challenge-attempts/' + attemptId + '/').then(function(r) { return r.json(); }).then(function(data) {
+        if (data.is_completed) {
+            finishChallenge();
+        } else {
+            startChallenge();
+            var elapsed = Math.floor((new Date() - new Date(data.started_at)) / 1000);
+            timeLeft = Math.max(0, timeLimit - elapsed);
+            /* restore answered questions */
+            if (data.answers) {
+                Object.keys(data.answers).forEach(function(k) {
+                    var cards = document.querySelectorAll('.question-card');
+                    if (cards[k]) {
+                        var btns = cards[k].querySelectorAll('.answer-btn');
+                        if (btns[data.answers[k]]) {
+                            btns[data.answers[k]].classList.remove('btn-outline');
+                            btns[data.answers[k]].classList.add('btn-primary');
+                        }
+                    }
+                });
+            }
+        }
+    });
+    {% endif %}
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% block title %}{% trans "Пользователи — Библиотечная система" %}{% endblock %}
+{% block dashboard_content %}
+<div class="fade-in-up">
+<div class="page-header">
+    <h1><i data-lucide="users" style="width:2rem;height:2rem;vertical-align:middle;color:var(--color-primary);"></i> {% trans "Пользователи" %}</h1>
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <a href="{% url 'dashboard:import_csv' %}" class="btn btn-outline"><i data-lucide="download" style="width:1.15rem;height:1.15rem;"></i> {% trans "Импорт учеников" %}</a>
+        <a href="{% url 'dashboard:export_students' %}" class="btn btn-accent"><i data-lucide="file-spreadsheet" style="width:1.15rem;height:1.15rem;"></i> Excel (Все)</a>
+        <a href="{% url 'dashboard:return_list_export' %}?debtors_only=1" class="btn btn-warning"><i data-lucide="alert-triangle" style="width:1.15rem;height:1.15rem;"></i> {% trans "Должники" %}</a>
+        <a href="{% url 'dashboard:return_list_export' %}" class="btn btn-outline"><i data-lucide="book-open" style="width:1.15rem;height:1.15rem;"></i> {% trans "Обходной (Май)" %}</a>
+    </div>
+</div>
+<div class="table-wrap mb-4">
+    <table>
+        <thead>
+            <tr><th>{% trans "Логин" %}</th><th>{% trans "ФИО" %}</th><th>{% trans "Роль" %}</th><th>{% trans "Класс" %}</th><th>{% trans "Статус" %}</th></tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+            <tr>
+                <td>{{ u.login }}</td>
+                <td><strong>{{ u.last_name }} {{ u.first_name }}</strong></td>
+                <td><span class="badge badge-info">{{ u.get_role_display }}</span></td>
+                <td>{{ u.grade|default:'-' }}</td>
+                <td>{% if u.is_active %}<span class="badge badge-success">{% trans "Активен" %}</span>{% else %}<span class="badge badge-muted">{% trans "Неактивен" %}</span>{% endif %}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted p-2">{% trans "Нет пользователей" %}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</div>
+{% endblock %}

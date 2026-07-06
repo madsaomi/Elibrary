@@ -1,0 +1,85 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% block title %}{% trans "Мои выдачи — Библиотечная система" %}{% endblock %}
+{% block dashboard_content %}
+<div class="fade-in-up">
+<div class="page-header">
+    <h1><i data-lucide="book-marked" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Мои выдачи" %}</h1>
+</div>
+
+{% if textbook_loans %}
+<h2 class="mb-2"><i data-lucide="book" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Учебники" %}</h2>
+<form method="post" action="{% url 'dashboard:qr_return_loans' %}" class="table-wrap mb-4">
+    {% csrf_token %}
+    <input type="hidden" name="item_type" value="textbook">
+    <table>
+        <thead>
+            <tr><th><input type="checkbox" onchange="var cbs=this.closest('table').querySelectorAll('.tb-cb'); cbs.forEach(function(c){c.checked=this.checked},this); updateRow(this.closest('form'))"></th><th>{% trans "Учебник" %}</th><th>{% trans "Выдан" %}</th><th>{% trans "Срок" %}</th><th>{% trans "Статус" %}</th></tr>
+        </thead>
+        <tbody>
+            {% for loan in textbook_loans %}
+            <tr class="{% if loan.status == 'overdue' %}color-danger{% endif %}">
+                <td><input type="checkbox" name="loan_ids" value="{{ loan.id }}" class="tb-cb" onchange="updateRow(this.closest('form'))"></td>
+                <td><strong>{{ loan.textbook.title }}</strong></td>
+                <td>{{ loan.issued_at|date:'d.m.Y' }}</td>
+                <td>{{ loan.due_date|date:'d.m.Y' }}</td>
+                <td>{% if loan.status == 'overdue' %}<span class="badge badge-danger">{{ loan.get_status_display }}</span>{% else %}<span class="badge badge-info">{{ loan.get_status_display }}</span>{% endif %}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted p-2">{% trans "Нет выдач учебников" %}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="p-2 flex gap-sm items-center" style="display:none" data-actions>
+        <button class="btn btn-primary btn-sm"><i data-lucide="camera" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Вернуть выбранное" %}</button>
+        <span class="text-muted text-sm" data-remaining></span>
+    </div>
+</form>
+{% endif %}
+
+<h2 class="mb-2">📗 {% trans "Книги" %}</h2>
+<form method="post" action="{% url 'dashboard:qr_return_loans' %}" class="table-wrap">
+    {% csrf_token %}
+    <input type="hidden" name="item_type" value="book">
+    <table>
+        <thead>
+            <tr><th><input type="checkbox" onchange="var cbs=this.closest('table').querySelectorAll('.bk-cb'); cbs.forEach(function(c){c.checked=this.checked},this); updateRow(this.closest('form'))"></th><th>{% trans "Книга" %}</th><th>{% trans "Выдана" %}</th><th>{% trans "Статус" %}</th></tr>
+        </thead>
+        <tbody>
+            {% for loan in book_loans %}
+            <tr class="{% if loan.status == 'overdue' %}color-danger{% endif %}">
+                <td><input type="checkbox" name="loan_ids" value="{{ loan.id }}" class="bk-cb" onchange="updateRow(this.closest('form'))"></td>
+                <td><strong>{{ loan.book.title }}</strong></td>
+                <td>{{ loan.issued_at|date:'d.m.Y' }}</td>
+                <td>{% if loan.status == 'overdue' %}<span class="badge badge-danger">{{ loan.get_status_display }}</span>{% else %}<span class="badge badge-info">{{ loan.get_status_display }}</span>{% endif %}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center text-muted p-2">{% trans "Нет выдач" %}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="p-2 flex gap-sm items-center" style="display:none" data-actions>
+        <button class="btn btn-primary btn-sm"><i data-lucide="camera" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Вернуть выбранное" %}</button>
+        <span class="text-muted text-sm" data-remaining></span>
+    </div>
+</form>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+function updateRow(form) {
+    var cbs = form.querySelectorAll('input[name="loan_ids"]');
+    var total = cbs.length;
+    var checked = 0;
+    cbs.forEach(function(c) { if (c.checked) checked++; });
+    var actions = form.querySelector('[data-actions]');
+    var remaining = form.querySelector('[data-remaining]');
+    if (checked > 0) {
+        actions.style.display = 'flex';
+        remaining.textContent = '{% trans "осталось на руках после возврата: " %}' + (total - checked);
+    } else {
+        actions.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

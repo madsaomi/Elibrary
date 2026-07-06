@@ -1,0 +1,142 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n static %}
+{% block title %}{% trans "Корзина — Библиотечная система" %}{% endblock %}
+{% block dashboard_content %}
+<div class="fade-in-up">
+<div class="page-header">
+    <h1><i data-lucide="shopping-cart" style="width:2rem;height:2rem;vertical-align:middle;color:var(--color-primary);"></i> {% trans "Корзина" %} <span class="badge badge-info" style="font-size: 1.25rem;">{{ books|length }}</span></h1>
+</div>
+<div class="card max-w-600 mb-4">
+    {% if books %}
+    <ul style="list-style: none; padding: 0; margin-bottom: 1.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden;">
+        {% for book in books %}
+        <li class="p-3 border-bottom" style="font-size: 1.05rem; display: flex; align-items: center; gap: 1rem; background: var(--bg-secondary);">
+            <span style="font-size: 1.5rem;"><i data-lucide="book" style="width:2rem;height:2rem;"></i></span>
+            <div>
+                <strong>{{ book.title }}</strong>
+                <div class="text-muted text-sm mt-05">{{ book.author|default:'-' }}</div>
+            </div>
+        </li>
+        {% empty %}
+        <li class="p-3 text-muted text-center">{% trans "Нет книг для отображения" %}</li>
+        {% endfor %}
+    </ul>
+    <button class="btn btn-primary w-full justify-center" id="generateQRBtn" style="font-size: 1.1rem; padding: 1rem;"><i data-lucide="smartphone" style="width:1.5rem;height:1.5rem;vertical-align:middle;"></i> {% trans "Сгенерировать QR для выдачи" %}</button>
+    <div id="qr-result" class="mt-3"></div>
+    <div id="qrTokenDisplay" class="qr-fullscreen" style="display:none; z-index: 1000;">
+        <div class="qr-fullscreen-inner fade-in-up" style="background: var(--bg-secondary); padding: 3rem; border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); text-align: center;">
+            <h2 class="qr-title mb-3"><i data-lucide="smartphone" style="width:1.5rem;height:1.5rem;vertical-align:middle;"></i> {% trans "QR-код для выдачи" %}</h2>
+            <div id="qrCode" class="qr-code-wrap mx-auto" style="padding: 1.5rem; background: white; border-radius: var(--radius-lg); display: inline-block;"></div>
+            <div class="qr-timer nums mt-3 mb-2" id="qrTimer" style="font-size: 2.5rem; font-weight: 700; color: var(--color-primary);">02:00</div>
+            <p class="qr-hint text-muted mb-4" style="font-size: 1.1rem;">{% trans "Покажите этот код библиотекарю для сканирования" %}</p>
+            <button class="btn btn-outline" onclick="closeQR()" style="padding-left: 2rem; padding-right: 2rem;">{% trans "Закрыть" %}</button>
+        </div>
+        <div id="qrRefreshTarget"
+             hx-get="{% url 'dashboard:qr_issue_refresh' %}"
+             hx-trigger="every 30s"
+             hx-swap="innerHTML"
+             style="display:none;"></div>
+    </div>
+    {% else %}
+    <div class="text-center p-4">
+        <div class="mb-4">
+            <img src="{% static 'images/illustrations/empty_box.png' %}" alt="Empty Cart" class="animate-float" style="max-width: 100%; height: auto; max-height: 200px; object-fit: contain;">
+        </div>
+        <h3 class="mb-1" style="font-family: var(--font-display); font-size: 1.5rem;">{% trans "Корзина пуста" %}</h3>
+        <p class="text-muted mb-3">{% trans "Добавьте книги из каталога." %}</p>
+        <a href="{% url 'dashboard:student_catalog' %}" class="btn btn-primary"><i data-lucide="book-open" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Перейти в каталог" %}</a>
+    </div>
+    {% endif %}
+</div>
+{{ book_ids|json_script:"book-ids-data" }}
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script>
+var qrTokenExp = 0;
+var qrTimerInterval = null;
+var qrInstance = null;
+
+function closeQR() {
+    document.getElementById('qrTokenDisplay').style.display = 'none';
+    if (qrTimerInterval) clearInterval(qrTimerInterval);
+}
+
+function updateCountdown() {
+    var el = document.getElementById('qrTimer');
+    if (!el) return;
+    var now = Date.now();
+    var diff = Math.max(0, qrTokenExp - now);
+    var m = Math.floor(diff / 60000);
+    var s = Math.floor((diff % 60000) / 1000);
+    el.textContent = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    if (diff <= 10000) {
+        el.style.color = 'var(--danger)';
+    } else {
+        el.style.color = 'var(--color-primary)';
+    }
+    if (diff <= 0) {
+        el.textContent = '00:00';
+        clearInterval(qrTimerInterval);
+        generateQR();
+    }
+}
+
+function generateQR() {
+    var bookIds = [];
+    var dataEl = document.getElementById('book-ids-data');
+    if (dataEl) {
+        bookIds = JSON.parse(dataEl.textContent);
+    }
+    fetch('{% url "regularbookloan-qr-token" %}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+        body: JSON.stringify({book_ids: bookIds})
+    }).then(r => r.json()).then(function(data) {
+        var display = document.getElementById('qrTokenDisplay');
+        display.style.display = 'flex';
+        display.style.position = 'fixed';
+        display.style.top = '0';
+        display.style.left = '0';
+        display.style.width = '100%';
+        display.style.height = '100%';
+        display.style.backgroundColor = 'rgba(0,0,0,0.5)';
+        display.style.alignItems = 'center';
+        display.style.justifyContent = 'center';
+        display.style.backdropFilter = 'blur(4px)';
+        
+        var el = document.getElementById('qrCode');
+        el.innerHTML = '';
+        qrInstance = new QRCode(el, { text: data.token, width: 280, height: 280, colorDark: "#000000", colorLight: "#ffffff" });
+        qrTokenExp = Date.now() + 120000;
+        if (qrTimerInterval) clearInterval(qrTimerInterval);
+        qrTimerInterval = setInterval(updateCountdown, 1000);
+        updateCountdown();
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var btn = document.getElementById('generateQRBtn');
+    if (btn) btn.addEventListener('click', generateQR);
+});
+
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+    if (evt.detail.target && evt.detail.target.id === 'qrRefreshTarget') {
+        var newToken = evt.detail.target.querySelector('[data-token]');
+        if (newToken) {
+            var el = document.getElementById('qrCode');
+            el.innerHTML = '';
+            qrInstance = new QRCode(el, { text: newToken.dataset.token, width: 280, height: 280, colorDark: "#000000", colorLight: "#ffffff" });
+            var newExp = parseInt(newToken.dataset.exp) * 1000;
+            if (newExp) {
+                qrTokenExp = newExp;
+                if (qrTimerInterval) clearInterval(qrTimerInterval);
+                qrTimerInterval = setInterval(updateCountdown, 1000);
+                updateCountdown();
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

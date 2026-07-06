@@ -1,0 +1,28 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% block title %}Управление районами{% endblock %}
+{% block dashboard_content %}
+<h1 class="mb-3">🏛️ Управление районами</h1>
+<div class="card max-w-500 mb-3">
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-15">
+            <label class="form-label">Название района</label>
+            <input type="text" name="name" class="form-input" required>
+        </div>
+        <button type="submit" class="btn btn-primary"><i data-lucide="plus" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> Создать район</button>
+    </form>
+</div>
+<div class="card overflow-x-auto">
+    <table>
+        <thead><tr><th>Название</th><th>Школ</th></tr></thead>
+        <tbody>
+            {% for d in districts %}
+            <tr><td>{{ d.name }}</td><td>{{ d.school_count }}</td></tr>
+            {% empty %}
+            <tr><td colspan="2" class="text-muted">Нет районов</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

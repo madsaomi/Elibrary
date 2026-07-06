@@ -1,0 +1,90 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% block title %}{% trans "QR-сканер — Библиотечная система" %}{% endblock %}
+{% block dashboard_content %}
+<div class="fade-in-up">
+<div class="qr-scanner-container" style="max-width: 600px; margin: 2rem auto;">
+    <div class="page-header" style="justify-content: center; text-align: center;">
+        <h1 class="mb-3"><i data-lucide="scan-line" style="width:2rem;height:2rem;vertical-align:middle;color:var(--color-primary);"></i> {% trans "QR-сканер" %}</h1>
+    </div>
+    <div class="card p-0" style="overflow: hidden; border-radius: var(--radius-xl); border: 2px solid var(--color-primary-light);">
+        <div id="qr-reader" class="qr-reader-box" style="width: 100%; border: none;">
+            <div style="padding: 4rem 2rem; background: var(--bg-tertiary); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; color: var(--color-text-muted);">
+                <!-- Placeholder for future 3D robot illustration -->
+                <!-- <img src="{% static 'images/illustrations/scanner_robot.png' %}" alt="Scanner" class="animate-float" style="max-height: 150px; margin-bottom: 1rem;"> -->
+                
+                <div class="pulse-icon" style="position: relative; width: 6rem; height: 6rem; display: flex; align-items: center; justify-content: center; background: var(--color-primary-light); border-radius: 50%; margin-bottom: 1rem;">
+                    <i data-lucide="scan" style="width:3rem;height:3rem;color:var(--color-primary);"></i>
+                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 50%; box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.4); animation: pulse-ring 2s infinite cubic-bezier(0.66, 0, 0, 1);"></div>
+                </div>
+                <p style="text-align: center; margin: 0; font-size: 1.1rem; font-weight: 500;">{% trans "Нажмите «Запустить камеру», затем наведите камеру на QR-код" %}</p>
+            </div>
+        </div>
+    </div>
+    <button class="btn btn-primary w-full justify-center mt-4" style="font-size: 1.1rem; padding: 1rem;" onclick="startScanner()">
+        <i data-lucide="camera" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Запустить камеру" %}
+    </button>
+    <div id="qr-result" class="mt-3"></div>
+</div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+let html5QrCode = null;
+function startScanner() {
+    const reader = document.getElementById('qr-reader');
+    reader.classList.add('qr-reader-active');
+    reader.innerHTML = '<div class="qr-reader-loading" style="padding: 4rem 2rem; background: var(--bg-tertiary); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; color: var(--color-text-muted);"><span style="font-size: 3rem; animation: pulse 2s infinite;"><i data-lucide="camera" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i></span><p style="text-align: center; margin: 0; font-size: 1.1rem;">{% trans "Наведите камеру на QR-код..." %}</p></div>';
+    html5QrCode = new Html5Qrcode('qr-reader');
+    html5QrCode.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        onScanSuccess
+    ).catch(err => {
+        reader.classList.remove('qr-reader-active');
+        document.getElementById('qr-result').innerHTML = '<div class="alert alert-danger" style="border-radius: var(--radius-lg); padding: 1rem; display: flex; align-items: center; gap: 0.75rem;"><i data-lucide="alert-triangle" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> <span>{% trans "Ошибка доступа к камере. Проверьте разрешения в настройках браузера." %}</span></div>';
+    });
+}
+function onScanSuccess(decodedText) {
+    if (html5QrCode) html5QrCode.stop();
+    const token = decodedText;
+    const isReturn = token.includes('"action":"return"') || token.includes("'action':'return'");
+    const endpoint = isReturn ? '/api/v1/book-loans/process_return/' : '/api/v1/book-loans/scan_qr/';
+    fetch(endpoint, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+        body: JSON.stringify({token: token})
+    }).then(r => r.json()).then(data => {
+        var resultEl = document.getElementById('qr-result');
+        if (data.error) {
+            var msg = data.error;
+            if (msg.includes('expired') || msg.includes('истек') || msg.includes('token')) {
+                msg = '{% trans "Этот QR-код устарел, попросите ученика обновить его" %}';
+            } else if (msg.includes('school') || msg.includes('школ')) {
+                msg = '{% trans "Этот код принадлежит другой школе" %}';
+            }
+            resultEl.innerHTML = '<div class="alert alert-danger fade-in-up" style="border-radius: var(--radius-lg); padding: 1rem; display: flex; align-items: center; gap: 0.75rem;"><i data-lucide="alert-triangle" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> <span>' + msg + '</span></div>';
+        } else {
+            const count = data.length || data.count || 'ok';
+            resultEl.innerHTML = '<div class="alert alert-success fade-in-up" style="border-radius: var(--radius-lg); padding: 1rem; display: flex; align-items: center; gap: 0.75rem;"><i data-lucide="check" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> <span>' + (isReturn ? '{% trans "Возвращено" %}' : '{% trans "Выдано" %}') + ': <strong>' + count + '</strong></span></div>';
+            
+            // Auto-restart scanner after success
+            setTimeout(() => {
+                document.getElementById('qr-result').innerHTML = '';
+                startScanner();
+            }, 3000);
+        }
+    }).catch(function() {
+        document.getElementById('qr-result').innerHTML = '<div class="alert alert-danger fade-in-up" style="border-radius: var(--radius-lg); padding: 1rem; display: flex; align-items: center; gap: 0.75rem;"><i data-lucide="alert-triangle" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> <span>{% trans "Ошибка связи с сервером. Попробуйте снова." %}</span></div>';
+    });
+}
+</script>
+<style>
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.7; }
+    100% { transform: scale(1); opacity: 1; }
+}
+</style>
+{% endblock %}

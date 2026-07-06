@@ -1,0 +1,93 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% block title %}{% trans "Главная — Библиотечная система" %}{% endblock %}
+{% block dashboard_content %}
+<div hx-get="{% url 'dashboard:home' %}" hx-trigger="every 60s" hx-select="#dashboard-main" hx-swap="outerHTML" hx-indicator="#home-skeleton">
+<div id="dashboard-main">
+<div id="home-skeleton" class="htmx-indicator">
+    <div class="stats-grid mb-3">
+        <div class="card-stat"><div class="skeleton skeleton-title mx-auto"></div><div class="skeleton skeleton-text mx-auto" style="width:40%"></div></div>
+        <div class="card-stat"><div class="skeleton skeleton-title mx-auto"></div><div class="skeleton skeleton-text mx-auto" style="width:40%"></div></div>
+        <div class="card-stat"><div class="skeleton skeleton-title mx-auto"></div><div class="skeleton skeleton-text mx-auto" style="width:40%"></div></div>
+        <div class="card-stat"><div class="skeleton skeleton-title mx-auto"></div><div class="skeleton skeleton-text mx-auto" style="width:40%"></div></div>
+    </div>
+    <div class="card p-3"><div class="skeleton skeleton-title" style="width:30%"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text" style="width:60%"></div></div>
+</div>
+<div class="fade-in-up">
+<h1 class="mb-05">{% blocktranslate %}Добро пожаловать, {{ user.first_name }}!{% endblocktranslate %}</h1>
+<p class="text-muted mb-3" style="font-size: 0.95rem;">
+    {% trans "Роль:" %} <span class="badge badge-info">{{ user.get_role_display }}</span>
+    {% if user.school %} · {{ user.school.name }}{% endif %}
+</p>
+
+{% if stats %}
+<div class="stats-grid mb-4">
+    <div class="card-stat">
+        <div class="icon"><i data-lucide="graduation-cap" style="width:2rem;height:2rem;"></i></div>
+        <div class="value">{{ stats.students }}</div>
+        <div class="label">{% trans "Учеников" %}</div>
+    </div>
+    <div class="card-stat">
+        <div class="icon"><i data-lucide="user-check" style="width:2rem;height:2rem;"></i></div>
+        <div class="value">{{ stats.teachers }}</div>
+        <div class="label">{% trans "Учителей" %}</div>
+    </div>
+    <div class="card-stat">
+        <div class="icon"><i data-lucide="book-open" style="width:2rem;height:2rem;"></i></div>
+        <div class="value">{{ stats.active_loans }}</div>
+        <div class="label">{% trans "Активных выдач" %}</div>
+    </div>
+    <div class="card-stat">
+        <div class="icon"><i data-lucide="star" style="width:2rem;height:2rem;"></i></div>
+        <div class="value">{{ stats.avg_xp }}</div>
+        <div class="label">{% trans "Средний XP" %}</div>
+    </div>
+</div>
+{% endif %}
+
+{% if leaderboard %}
+<h2 class="mb-2"><i data-lucide="trophy" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Лидерборд школы" %}</h2>
+<div class="table-wrap mb-4">
+    <table>
+        <thead>
+            <tr><th>#</th><th>{% trans "Ученик" %}</th><th>{% trans "Класс" %}</th><th class="text-right">XP</th><th class="text-right">{% trans "Уровень" %}</th></tr>
+        </thead>
+        <tbody>
+            {% for ul in leaderboard %}
+            <tr class="{% if ul.user_id == user.id %}current-user-row{% endif %}">
+                <td>{{ forloop.counter }}</td>
+                <td><strong>{{ ul.user.last_name }} {{ ul.user.first_name }}</strong></td>
+                <td>{{ ul.user.grade|default:'-' }}</td>
+                <td class="text-right"><strong>{{ ul.total_xp }}</strong></td>
+                <td class="text-right"><span class="badge badge-info">{% blocktranslate %}Ур. {{ ul.level.number }}{% endblocktranslate %}</span></td>
+            </tr>
+            {% endfor %}
+            {% if user_entry %}
+            <tr class="current-user-row pinned">
+                <td>{{ user_rank }}</td>
+                <td><strong>{{ user_entry.user.last_name }} {{ user_entry.user.first_name }}</strong></td>
+                <td>{{ user_entry.user.grade|default:'-' }}</td>
+                <td class="text-right"><strong>{{ user_entry.total_xp }}</strong></td>
+                <td class="text-right"><span class="badge badge-info">{% blocktranslate %}Ур. {{ user_entry.level.number }}{% endblocktranslate %}</span></td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if news %}
+<h2 class="mb-2 mt-3"><i data-lucide="newspaper" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Новости" %}</h2>
+<div class="flex flex-col gap-lg">
+    {% for item in news %}
+    <div class="card card-hover">
+        <h3>{{ item.title }}</h3>
+        <p class="text-muted mt-1" style="line-height: 1.6;">{{ item.content|truncatewords:30 }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+</div>
+</div>
+</div>
+{% endblock %}

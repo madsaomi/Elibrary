@@ -1,0 +1,144 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% block title %}{% trans "Переводы учеников" %}{% endblock %}
+{% block dashboard_content %}
+<div class="fade-in-up">
+<div class="page-header">
+    <h1><i data-lucide="arrow-left-right" style="width:2rem;height:2rem;vertical-align:middle;color:var(--color-primary);"></i> {% trans "Переводы учеников между школами" %}</h1>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+    <!-- Initiate Departure -->
+    <div class="card">
+        <h2 style="font-size: 1.15rem; margin-bottom: 0.75rem;"><i data-lucide="log-out" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Оформить уход ученика" %}</h2>
+        <p class="text-muted mb-2">
+            {% blocktranslate %}Введите ID ученика для инициации ухода. Все книги и учебники должны быть сданы.{% endblocktranslate %}
+        </p>
+        <form method="post" action="{% url 'dashboard:transfer_depart' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="initiate">
+            <div class="mb-2">
+                <label>{% trans "ID ученика (UUID)" %}</label>
+                <input type="text" name="user_id" class="form-input" placeholder="UUID..." required>
+            </div>
+            <button type="submit" class="btn btn-warning"><i data-lucide="log-out" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Инициировать уход" %}</button>
+        </form>
+    </div>
+
+    <!-- Accept Incoming Transfer -->
+    <div class="card">
+        <h2 style="font-size: 1.15rem; margin-bottom: 0.75rem;"><i data-lucide="log-in" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Принять ученика из другой школы" %}</h2>
+        <p class="text-muted mb-2">
+            {% blocktranslate %}Введите логин ученика, который ожидает перевода. XP будет уменьшен на 50%.{% endblocktranslate %}
+        </p>
+        <form method="post" action="{% url 'dashboard:transfer_accept' %}">
+            {% csrf_token %}
+            <div class="mb-2">
+                <label>{% trans "Логин ученика" %}</label>
+                <input type="text" name="user_login" class="form-input" placeholder="ivan.petrov" required>
+            </div>
+            <button type="submit" class="btn btn-primary"><i data-lucide="log-in" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Принять в школу" %}</button>
+        </form>
+    </div>
+</div>
+
+<!-- Outgoing Transfers -->
+{% if outgoing %}
+<div class="table-wrap mt-4">
+    <h3 style="margin-bottom: 0.5rem;"><i data-lucide="log-out" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Ожидают ухода из вашей школы" %}</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>{% trans "ФИО" %}</th>
+                <th>{% trans "Логин" %}</th>
+                <th>{% trans "Статус" %}</th>
+                <th>{% trans "Действие" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in outgoing %}
+            <tr>
+                <td><strong>{{ t.user.last_name }} {{ t.user.first_name }}</strong></td>
+                <td>{{ t.user.login }}</td>
+                <td><span class="badge badge-warning">{{ t.get_status_display }}</span></td>
+                <td>
+                    {% if t.status == 'departing' %}
+                    <form method="post" action="{% url 'dashboard:transfer_depart' %}" style="display:inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="user_id" value="{{ t.user.id }}">
+                        <input type="hidden" name="action" value="complete">
+                        <button type="submit" class="btn btn-accent btn-sm"><i data-lucide="check" style="width:1.15rem;height:1.15rem;vertical-align:middle;"></i> {% trans "Подтвердить уход" %}</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Incoming Transfers -->
+{% if incoming %}
+<div class="table-wrap mt-4">
+    <h3 style="margin-bottom: 0.5rem;"><i data-lucide="log-in" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Ожидают приёма (из других школ)" %}</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>{% trans "ФИО" %}</th>
+                <th>{% trans "Логин" %}</th>
+                <th>{% trans "Из школы" %}</th>
+                <th>{% trans "Действие" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in incoming %}
+            <tr>
+                <td><strong>{{ t.user.last_name }} {{ t.user.first_name }}</strong></td>
+                <td>{{ t.user.login }}</td>
+                <td>{{ t.from_school.name }}</td>
+                <td>
+                    <form method="post" action="{% url 'dashboard:transfer_accept' %}" style="display:inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="user_login" value="{{ t.user.login }}">
+                        <button type="submit" class="btn btn-primary btn-sm"><i data-lucide="log-in" style="width:1.15rem;height:1.15rem;vertical-align:middle;"></i> {% trans "Принять" %}</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Completed Transfers History -->
+{% if completed %}
+<div class="table-wrap mt-4">
+    <h3 style="margin-bottom: 0.5rem;"><i data-lucide="clipboard-list" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "История переводов" %}</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>{% trans "ФИО" %}</th>
+                <th>{% trans "Из школы" %}</th>
+                <th>{% trans "В школу" %}</th>
+                <th>{% trans "XP до → после" %}</th>
+                <th>{% trans "Дата" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in completed %}
+            <tr>
+                <td><strong>{{ t.user.last_name }} {{ t.user.first_name }}</strong></td>
+                <td>{{ t.from_school.name }}</td>
+                <td>{{ t.to_school.name }}</td>
+                <td>{{ t.xp_before }} → {{ t.xp_after }}</td>
+                <td>{{ t.completed_at|date:"d.m.Y H:i" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+</div>
+{% endblock %}

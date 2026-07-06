@@ -1,0 +1,25 @@
+{% load i18n %}
+<!DOCTYPE html>
+{% load static i18n %}
+<html lang="{{ current_language|default:'ru' }}" data-theme="{{ theme|default:'light' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% trans "Библиотечная система" %}{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.3/index.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/manrope@5.0.3/index.min.css">
+    <script src="https://unpkg.com/htmx.org@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    {% block content %}{% endblock %}
+    {% block extra_scripts %}{% endblock %}
+    <script>
+      document.addEventListener('DOMContentLoaded', function() { if(window.lucide) lucide.createIcons(); });
+      document.body.addEventListener('htmx:afterSwap', function() { if(window.lucide) lucide.createIcons(); });
+    </script>
+</body>
+</html>

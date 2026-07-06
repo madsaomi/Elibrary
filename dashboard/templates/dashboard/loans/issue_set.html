@@ -1,0 +1,60 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% block title %}{% blocktranslate %}Выдача учебников — {{ student.last_name }} {{ student.first_name }}{% endblocktranslate %}{% endblock %}
+{% block dashboard_content %}
+<div class="fade-in-up">
+<div class="page-header">
+    <h1><i data-lucide="book-open" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% blocktranslate %}Выдача учебников — {{ student.last_name }} {{ student.first_name }}{% endblocktranslate %}</h1>
+    <button class="btn btn-accent" onclick="selectAllAvailable()">📗 {% trans "Выдать все доступные" %}</button>
+</div>
+<p class="text-muted mb-4" style="font-size: 0.95rem;">
+    <strong>{{ student.last_name }} {{ student.first_name }}</strong> · {{ student.grade|default:_('без класса') }}
+</p>
+<form method="post" id="issueForm">
+    {% csrf_token %}
+    <div class="table-wrap mb-4">
+        <table>
+            <thead>
+                <tr><th>{% trans "Предмет" %}</th><th>{% trans "Учебник" %}</th><th class="text-center">{% trans "Статус" %}</th><th class="text-center">{% trans "Выдать" %}</th></tr>
+            </thead>
+            <tbody>
+                {% for item in textbook_set %}
+                <tr>
+                    <td>{{ item.assignment.subject }}</td>
+                    <td><strong>{{ item.textbook.title }}</strong></td>
+                    <td class="text-center">
+                        {% if item.status == 'issued' %}
+                        <span class="badge badge-info"><i data-lucide="check" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Выдан" %} {{ item.issued_at|date:'d.m.Y' }}</span>
+                        {% elif item.status == 'overdue' %}
+                        <span class="badge badge-danger"><i data-lucide="alert-triangle" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Просрочено" %} {{ item.issued_at|date:'d.m.Y' }}</span>
+                        {% elif item.status == 'available' %}
+                        <span class="badge badge-success">📗 {% trans "В наличии" %}</span>
+                        {% else %}
+                        <span class="badge badge-muted"><i data-lucide="x" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Нет в наличии" %}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if item.status == 'available' or item.status == 'unavailable' %}
+                        <input type="checkbox" name="textbook_ids" value="{{ item.textbook.id }}"
+                            class="cb-available"
+                            {% if item.status == 'unavailable' %}disabled title="{% trans 'Нет в наличии' %}"{% endif %}>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-muted p-2">{% trans "Нет учебников в комплекте класса" %}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <button type="submit" class="btn btn-primary"><i data-lucide="log-out" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Выдать выбранные" %}</button>
+</form>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+function selectAllAvailable() {
+    document.querySelectorAll('.cb-available:not(:disabled)').forEach(function(cb) { cb.checked = true; });
+}
+</script>
+{% endblock %}

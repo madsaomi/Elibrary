@@ -1,0 +1,25 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% block title %}{% trans "Модерация челленджа" %}{% endblock %}
+{% block dashboard_content %}
+<h1 class="mb-05">🔍 {% trans "Модерация челленджа" %}</h1>
+<p class="text-muted mb-3">
+    {% blocktranslate %}{{ challenge.grade_number }} класс{% endblocktranslate %} · {{ challenge.language|upper }} · {% blocktranslate %}Неделя {{ challenge.week_start }}{% endblocktranslate %}
+</p>
+<form method="post">
+    {% csrf_token %}
+    <div class="card mb-2">
+        <div class="flex justify-between items-center mb-2">
+            <h2>{% blocktranslate %}Вопросы ({{ challenge.questions|length }}){% endblocktranslate %}</h2>
+            <span class="badge badge-warning">{{ challenge.get_status_display }}</span>
+        </div>
+        <textarea name="questions" class="form-input" rows="20" style="font-family: monospace; font-size: 0.8rem;">{{ challenge.questions|pprint }}</textarea>
+        <p class="text-muted text-sm mt-05">{% trans "Формат: JSON массив объектов с полями question, options (массив из 3), correct (0-2)" %}</p>
+    </div>
+    <div class="flex gap-md">
+        <button type="submit" name="action" value="save" class="btn btn-primary">{% trans "Сохранить черновик" %}</button>
+        <button type="submit" name="action" value="publish" class="btn btn-accent">{% trans "Опубликовать" %}</button>
+        <a href="{% url 'dashboard:challenge_moderation' %}" class="btn btn-outline">{% trans "Назад" %}</a>
+    </div>
+</form>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% block title %}{% trans "Модерация челленджей — Библиотечная система" %}{% endblock %}
+{% block dashboard_content %}
+<h1 class="mb-3"><i data-lucide="brain" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Модерация челленджей" %}</h1>
+
+<div class="flex flex-col gap-lg">
+    {% for challenge in challenges %}
+    <div class="card">
+        <div class="flex justify-between items-center mb-15">
+            <div>
+                <strong>{% blocktranslate %}{{ challenge.grade_number }} кл.{% endblocktranslate %}</strong> —
+                <span class="text-muted">{{ challenge.week_start|date:'d.m.Y' }}</span>
+                <span class="text-muted text-sm ml-auto">{{ challenge.language|upper }}</span>
+            </div>
+            <div class="flex gap-sm">
+                <a href="{% url 'dashboard:challenge_moderation_detail' challenge.id %}" class="btn btn-outline btn-sm">{% trans "Просмотреть" %}</a>
+                <button class="btn btn-primary btn-sm"
+                    onclick="publishChallenge('{{ challenge.id }}')">{% trans "Опубликовать" %}</button>
+            </div>
+        </div>
+        {% if challenge.questions %}
+        <div class="text-muted">
+            {% blocktranslate %}{{ challenge.questions|length }} вопросов{% endblocktranslate %}
+        </div>
+        {% endif %}
+    </div>
+    {% empty %}
+    <div class="empty-state"><div class="icon"><i data-lucide="brain" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i></div><h3>{% trans "Нет челленджей на модерации" %}</h3><p>{% trans "Новые челленджи генерируются автоматически по понедельникам." %}</p></div>
+    {% endfor %}
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+function publishChallenge(id) {
+    fetch('/api/v1/challenges/' + id + '/publish/', {
+        method: 'POST',
+        headers: {'X-CSRFToken': '{{ csrf_token }}'},
+    }).then(r => r.json()).then(() => location.reload());
+}
+</script>
+{% endblock %}

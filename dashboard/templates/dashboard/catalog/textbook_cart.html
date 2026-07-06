@@ -1,0 +1,32 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% block title %}{% trans "Корзина учебников" %}{% endblock %}
+{% block dashboard_content %}
+<h1 class="mb-3"><i data-lucide="shopping-cart" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Корзина учебников" %} ({{ textbooks|length }})</h1>
+<form method="post">
+    {% csrf_token %}
+    <div class="card overflow-x-auto mb-2">
+        <table>
+            <thead>
+                <tr><th>{% trans "Название" %}</th><th>{% trans "Предмет" %}</th><th>{% trans "Класс" %}</th><th>{% trans "Язык" %}</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for tb in textbooks %}
+                <tr>
+                    <td>{{ tb.title }}</td>
+                    <td>{{ tb.subject }}</td>
+                    <td>{{ tb.grade_number }}</td>
+                    <td>{{ tb.get_language_display }}</td>
+                    <td><a href="{% url 'dashboard:cart_remove' %}?id={{ tb.id }}" class="btn btn-sm btn-outline btn-danger">✕</a></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted p-3">{% trans "Корзина пуста." %} <a href="{% url 'dashboard:student_catalog' %}">{% trans "Добавьте учебники из каталога." %}</a></td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if textbooks %}
+    <button class="btn btn-primary" type="submit">{% trans "Подтвердить бронирование" %}</button>
+    {% endif %}
+</form>
+{% endblock %}

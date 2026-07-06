@@ -1,0 +1,67 @@
+# English translation for School Library System
+# Copyright (C) 2026
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-05 17:00+0500\n"
+"PO-Revision-Date: 2026-07-05 17:00+0500\n"
+"Last-Translator: \n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Вход в систему"
+msgstr "Login"
+
+msgid "Логин"
+msgstr "Login"
+
+msgid "Пароль"
+msgstr "Password"
+
+msgid "Войти"
+msgstr "Sign in"
+
+msgid "Главная"
+msgstr "Home"
+
+msgid "Профиль"
+msgstr "Profile"
+
+msgid "Выйти"
+msgstr "Log out"
+
+msgid "Пользователи"
+msgstr "Users"
+
+msgid "Учебники"
+msgstr "Textbooks"
+
+msgid "Книги"
+msgstr "Books"
+
+msgid "Библиотечная система"
+msgstr "Library System"
+
+msgid "Добро пожаловать"
+msgstr "Welcome"
+
+msgid "Неверный логин или пароль"
+msgstr "Invalid login or password"
+
+msgid "Доступ запрещён"
+msgstr "Access denied"
+
+msgid "Ошибка"
+msgstr "Error"
+
+msgid "Страница не найдена"
+msgstr "Page not found"
+
+msgid "На главную"
+msgstr "Home"

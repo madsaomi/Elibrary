@@ -1,0 +1,72 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% block title %}{% trans "Настройки школы" %}{% endblock %}
+{% block dashboard_content %}
+<div class="fade-in-up">
+<div class="page-header">
+    <h1><i data-lucide="settings" style="width:2rem;height:2rem;vertical-align:middle;color:var(--color-primary);"></i> {% trans "Настройки школы" %}: {{ school.name }}</h1>
+</div>
+
+{% if error %}
+<div class="error mb-2" style="background: var(--danger); color: #fff; padding: 0.75rem 1rem; border-radius: var(--radius); margin-bottom: 1rem;">
+    <i data-lucide="alert-triangle" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {{ error }}
+</div>
+{% endif %}
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+    <!-- Auto-Promote Card -->
+    <div class="card">
+        <h2 style="font-size: 1.15rem; margin-bottom: 0.75rem;"><i data-lucide="graduation-cap" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Автоперевод классов (1 сентября)" %}</h2>
+        <p class="text-muted mb-2">
+            {% blocktranslate %}Переводит все классы школы на следующий год обучения. 11-е классы получают статус "Выпускник". Операция необратима и защищена от повторного запуска.{% endblocktranslate %}
+        </p>
+        <form method="post" action="{% url 'dashboard:promote_classes' %}" onsubmit="return confirm('Вы уверены? Эта операция необратима!')">
+            {% csrf_token %}
+            <div class="mb-2">
+                <label>{% trans "Текущий учебный год" %}</label>
+                <input type="text" name="current_year" value="{{ current_year }}" class="form-input" required>
+            </div>
+            <div class="mb-2">
+                <label>{% trans "Следующий учебный год" %}</label>
+                <input type="text" name="next_year" value="{{ next_year }}" class="form-input" required>
+            </div>
+            <button type="submit" class="btn btn-warning"><i data-lucide="rocket" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Запустить автоперевод" %}</button>
+        </form>
+    </div>
+
+    <!-- Activate Grade 5 Card -->
+    <div class="card">
+        <h2 style="font-size: 1.15rem; margin-bottom: 0.75rem;"><i data-lucide="key" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Активация доступа 5-го класса" %}</h2>
+        <p class="text-muted mb-2">
+            {% blocktranslate %}Генерирует логины и пароли для учеников 5-х классов, которые ранее были записями без доступа (1-4 класс). Включает их в геймификацию.{% endblocktranslate %}
+        </p>
+        <a href="{% url 'dashboard:activate_grade' %}" class="btn btn-primary">🔓 {% trans "Активировать 5-й класс" %}</a>
+    </div>
+</div>
+
+{% if promotions %}
+<div class="table-wrap mt-4">
+    <h3 style="margin-bottom: 0.5rem;"><i data-lucide="clipboard-list" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Журнал автопереводов" %}</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>{% trans "Учебный год" %}</th>
+                <th>{% trans "Дата" %}</th>
+                <th>{% trans "Инициировал" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in promotions %}
+            <tr>
+                <td>{{ p.academic_year }}</td>
+                <td>{{ p.created_at|date:"d.m.Y H:i" }}</td>
+                <td>{{ p.initiated_by.last_name }} {{ p.initiated_by.first_name }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+</div>
+{% endblock %}

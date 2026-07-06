@@ -1,0 +1,54 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% block title %}{{ textbook.title }}{% endblock %}
+{% block dashboard_content %}
+<div class="mb-4 flex gap-md align-center">
+    <a href="javascript:history.back()" class="btn btn-outline btn-sm">⬅ {% trans "Назад" %}</a>
+    <h1 style="margin: 0; font-size: 1.75rem;"><i data-lucide="book" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {{ textbook.title }}</h1>
+</div>
+
+<div class="card fade-in-up" style="max-width: 800px; display: flex; gap: 2rem; flex-wrap: wrap;">
+    <div style="flex: 0 0 250px;">
+        {% if textbook.cover_image %}
+            <img src="{{ textbook.cover_image.url }}" alt="{{ textbook.title }}" style="width: 100%; border-radius: var(--radius); box-shadow: var(--shadow-sm); object-fit: cover; aspect-ratio: 2/3;">
+        {% else %}
+            <div style="width: 100%; aspect-ratio: 2/3; background: var(--bg-alt); display: flex; align-items: center; justify-content: center; border-radius: var(--radius); color: var(--text-muted); font-size: 6rem; box-shadow: var(--shadow-sm);"><i data-lucide="book" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i></div>
+        {% endif %}
+    </div>
+    <div style="flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 1rem;">
+        <div>
+            <h2 style="font-size: 2rem; margin-bottom: 0.5rem;">{{ textbook.title }}</h2>
+            <div class="badge badge-primary" style="font-size: 1rem; padding: 0.5rem 1rem;">{{ textbook.get_language_display }}</div>
+        </div>
+        
+        <table class="table-wrap" style="margin-top: 1rem;">
+            <tbody>
+                <tr>
+                    <td style="color: var(--text-muted); width: 40%;">{% trans "Учебный год" %}</td>
+                    <td><strong>{{ textbook.academic_year }}</strong></td>
+                </tr>
+                <tr>
+                    <td style="color: var(--text-muted);">{% trans "Предметы" %}</td>
+                    <td>
+                        <div class="flex gap-sm flex-wrap">
+                            {% for st in textbook.subjects.all %}
+                            <span class="badge badge-info">{{ st.subject.name }} ({{ st.grade_number }} {% trans "класс" %})</span>
+                            {% empty %}
+                            <span class="text-muted">{% trans "Нет привязанных предметов" %}</span>
+                            {% endfor %}
+                        </div>
+                    </td>
+                </tr>
+                {% if textbook.description %}
+                <tr>
+                    <td colspan="2">
+                        <div style="color: var(--text-muted); margin-bottom: 0.5rem; font-weight: bold;">{% trans "Описание" %}</div>
+                        <p style="line-height: 1.6;">{{ textbook.description }}</p>
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

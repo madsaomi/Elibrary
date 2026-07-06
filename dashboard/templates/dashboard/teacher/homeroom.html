@@ -1,0 +1,41 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% block title %}{% trans "Мои классы" %}{% endblock %}
+{% block dashboard_content %}
+<div class="fade-in-up">
+<div class="page-header">
+    <h1><i data-lucide="users" style="width:2rem;height:2rem;vertical-align:middle;color:var(--color-primary);"></i> {% trans "Мои классы" %}</h1>
+</div>
+
+{% for cls in classes %}
+<h2 class="mb-2 {% if not forloop.first %}mt-4{% endif %}"><i data-lucide="school" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {{ cls }} <span class="text-muted" style="font-size: 1rem; font-weight: normal;">— {{ cls.school.name }}</span></h2>
+<div class="table-wrap mb-4">
+    <table>
+        <thead>
+            <tr><th>{% trans "ФИО" %}</th><th class="text-center">{% trans "Учебников" %}</th><th class="text-center">{% trans "Книг" %}</th><th class="text-right">XP</th><th class="text-right">{% trans "Стрик" %}</th></tr>
+        </thead>
+        <tbody>
+            {% for s in students %}
+            {% if s.grade == cls %}
+            <tr>
+                <td><strong>{{ s.last_name }} {{ s.first_name }}</strong></td>
+                <td class="text-center"><span class="badge badge-info">{{ s.textbook_active }}</span></td>
+                <td class="text-center"><span class="badge badge-info">{{ s.book_active }}</span></td>
+                <td class="text-right"><strong>{{ s.level_info.total_xp|default:'0' }}</strong></td>
+                <td class="text-right"><span class="badge badge-warning">🔥 {{ s.streak.current_streak|default:'0' }}</span></td>
+            </tr>
+            {% endif %}
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted p-2">{% trans "Нет учеников" %}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% empty %}
+<div class="card text-center text-muted p-4">
+    <div style="font-size: 2rem; margin-bottom: 1rem;"><i data-lucide="book-open-check" style="width:3rem;height:3rem;color:var(--color-primary);"></i></div>
+    {% trans "У вас нет прикреплённых классов" %}
+</div>
+{% endfor %}
+</div>
+{% endblock %}

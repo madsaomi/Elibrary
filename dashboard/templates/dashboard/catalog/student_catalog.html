@@ -1,0 +1,72 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% block title %}{% trans "Каталог — Библиотечная система" %}{% endblock %}
+{% block dashboard_content %}
+<div class="fade-in-up">
+<div class="page-header">
+    <h1><i data-lucide="book-open" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Каталог" %}</h1>
+</div>
+<form method="get" class="form-inline mb-3 max-w-500">
+    <input type="text" name="q" value="{{ q }}" placeholder="{% trans 'Поиск книг и учебников...' %}" class="form-input flex-1">
+    <button class="btn btn-primary" type="submit">{% trans "Поиск" %}</button>
+</form>
+
+<h2 class="mb-2"><i data-lucide="book-marked" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Учебники" %}</h2>
+<div class="table-wrap mb-4">
+    <table>
+        <thead>
+            <tr><th></th><th>{% trans "Название" %}</th><th>{% trans "Предмет" %}</th><th>{% trans "Класс" %}</th><th>{% trans "Год" %}</th><th></th></tr>
+        </thead>
+        <tbody>
+            {% for tb in textbooks %}
+            <tr>
+                <td>{% if tb.cover %}<a href="{% url 'dashboard:textbook_detail' tb.id %}"><img src="{{ tb.cover.url }}" alt="" class="cover-thumb"></a>{% else %}<a href="{% url 'dashboard:textbook_detail' tb.id %}" style="text-decoration: none;"><span class="cover-placeholder"><i data-lucide="book-marked" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i></span></a>{% endif %}</td>
+                <td><a href="{% url 'dashboard:textbook_detail' tb.id %}" style="color: inherit; text-decoration: none;"><strong>{{ tb.title }}</strong></a></td>
+                <td>{{ tb.subject }}</td>
+                <td>{{ tb.grade_number }}</td>
+                <td>{{ tb.academic_year }}</td>
+                <td>
+                    {% if tb.id|stringformat:'s' in cart_ids %}
+                    <a href="{% url 'dashboard:cart_remove' %}?id={{ tb.id }}" class="btn btn-sm btn-outline">{% trans "Убрать" %}</a>
+                    {% else %}
+                    <a href="{% url 'dashboard:cart_add' %}?id={{ tb.id }}" class="btn btn-sm btn-primary">{% trans "Добавить" %}</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center text-muted p-2">{% trans "Нет учебников" %}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<h2 class="mb-2"><i data-lucide="book-open" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Книги" %}</h2>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr><th></th><th>{% trans "Название" %}</th><th>{% trans "Автор" %}</th><th>{% trans "Категория" %}</th><th>{% trans "Статус" %}</th><th></th></tr>
+        </thead>
+        <tbody>
+            {% for book in books %}
+            <tr>
+                <td>{% if book.cover %}<a href="{% url 'dashboard:book_detail' book.id %}"><img src="{{ book.cover.url }}" alt="" class="cover-thumb"></a>{% else %}<a href="{% url 'dashboard:book_detail' book.id %}" style="text-decoration: none;"><span class="cover-placeholder"><i data-lucide="book-open" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i></span></a>{% endif %}</td>
+                <td><a href="{% url 'dashboard:book_detail' book.id %}" style="color: inherit; text-decoration: none;"><strong>{{ book.title }}</strong></a></td>
+                <td>{{ book.author|default:'-' }}</td>
+                <td>{{ book.category.name|default:'-' }}</td>
+                <td>{% if book.available_copies > 0 %}<span class="badge badge-success">{% trans "в наличии" %}</span>{% else %}<span class="badge badge-muted">{% trans "нет" %}</span>{% endif %}</td>
+                <td>
+                    {% if book.id|stringformat:'s' in cart_ids %}
+                    <a href="{% url 'dashboard:cart_remove' %}?id={{ book.id }}" class="btn btn-sm btn-outline">{% trans "Убрать" %}</a>
+                    {% else %}
+                    <a href="{% url 'dashboard:cart_add' %}?id={{ book.id }}" class="btn btn-sm btn-primary">{% trans "Добавить" %}</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center text-muted p-2">{% trans "Нет книг" %}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</div>
+{% endblock %}

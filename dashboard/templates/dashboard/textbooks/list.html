@@ -1,0 +1,31 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% block title %}Учебники — Библиотечная система{% endblock %}
+{% block dashboard_content %}
+<div class="page-header"><h1><i data-lucide="book-open" style="width:2rem;height:2rem;vertical-align:middle;color:var(--color-primary);"></i> Учебники</h1><div class="flex gap-sm">{% if user.role == 'school_admin' %}<a href="{% url 'dashboard:textbook_stock' %}" class="btn btn-outline"><i data-lucide="package" style="width:1.15rem;height:1.15rem;"></i> Остатки</a>{% endif %}<a href="{% url 'dashboard:textbook_create' %}" class="btn btn-primary"><i data-lucide="plus" style="width:1.15rem;height:1.15rem;"></i> Добавить</a></div></div>
+<form method="get" class="flex gap-sm mb-2">
+    <input type="text" name="q" value="{{ q }}" placeholder="Поиск по названию, предмету или автору..." class="form-input flex-1">
+    <button class="btn btn-primary" type="submit">Поиск</button>
+</form>
+<div class="card overflow-x-auto">
+    <table>
+        <thead>
+            <tr><th></th><th>Название</th><th>Предмет</th><th>Класс</th><th>Язык</th><th>Год</th></tr>
+        </thead>
+        <tbody>
+            {% for tb in textbooks %}
+            <tr>
+                <td>{% if tb.cover %}<img src="{{ tb.cover.url }}" alt="" class="cover-thumb">{% else %}<span class="cover-placeholder" style="display:flex;align-items:center;justify-content:center;aspect-ratio:2/3;background:var(--bg-tertiary);border-radius:6px;width:40px;"><i data-lucide="book" style="width:1.2rem;height:1.2rem;color:var(--color-text-muted);"></i></span>{% endif %}</td>
+                <td>{{ tb.title }}</td>
+                <td>{{ tb.subject }}</td>
+                <td>{{ tb.grade_number }}</td>
+                <td>{{ tb.get_language_display }}</td>
+                <td>{{ tb.academic_year }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center text-muted p-2">Нет учебников</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

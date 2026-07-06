@@ -1,0 +1,59 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% block title %}Управление классами{% endblock %}
+{% block dashboard_content %}
+<h1 class="mb-3"><i data-lucide="book-open" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> Управление классами</h1>
+<div class="card max-w-500 mb-3">
+    <form method="post">
+        {% csrf_token %}
+        {% if schools %}
+        <div class="mb-15">
+            <label class="form-label">Школа</label>
+            <select name="school_id" class="form-input" required>
+                {% for s in schools %}
+                <option value="{{ s.id }}">{{ s.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        <div class="grid-2 gap-md">
+            <div>
+                <label class="form-label">Номер (1-11)</label>
+                <input type="number" name="number" min="1" max="11" class="form-input" required>
+            </div>
+            <div>
+                <label class="form-label">Параллель</label>
+                <input type="text" name="parallel" class="form-input" placeholder="А" required>
+            </div>
+        </div>
+        <div class="grid-2 gap-md mt-15">
+            <div>
+                <label class="form-label">Язык</label>
+                <select name="language" class="form-input">
+                    <option value="ru">Русский</option>
+                    <option value="uz">Узбекский</option>
+                    <option value="kaa">Каракалпакский</option>
+                    <option value="en">Английский</option>
+                </select>
+            </div>
+            <div>
+                <label class="form-label">Учебный год</label>
+                <input type="text" name="academic_year" class="form-input" placeholder="2025-2026" required>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary mt-15"><i data-lucide="plus" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> Создать класс</button>
+    </form>
+</div>
+<div class="card overflow-x-auto">
+    <table>
+        <thead><tr><th>Класс</th><th>Школа</th><th>Статус</th></tr></thead>
+        <tbody>
+            {% for cls in classes %}
+            <tr><td>{{ cls }}</td><td>{{ cls.school.name }}</td><td><span class="badge badge-{% if cls.status == 'active' %}success{% else %}warning{% endif %}">{{ cls.get_status_display }}</span></td></tr>
+            {% empty %}
+            <tr><td colspan="3" class="text-muted">Нет классов</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

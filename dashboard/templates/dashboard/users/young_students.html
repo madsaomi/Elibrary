@@ -1,0 +1,50 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n %}
+{% block title %}{% trans "Ученики 1-4 класса" %}{% endblock %}
+{% block dashboard_content %}
+<div class="fade-in-up">
+<div class="page-header">
+    <h1>👶 {% trans "Ученики 1-4 классов" %}</h1>
+</div>
+<div class="card max-w-500 mb-4">
+    <form method="post">
+        {% csrf_token %}
+        <div class="grid-2 gap-md">
+            <div>
+                <label class="form-label">{% trans "Фамилия" %}</label>
+                <input type="text" name="last_name" class="form-input" required>
+            </div>
+            <div>
+                <label class="form-label">{% trans "Имя" %}</label>
+                <input type="text" name="first_name" class="form-input" required>
+            </div>
+        </div>
+        <div class="mt-15">
+            <label class="form-label">{% trans "Класс" %}</label>
+            <select name="class_id" class="form-input" required>
+                {% for cls in classes %}
+                <option value="{{ cls.id }}">{{ cls }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary mt-15"><i data-lucide="plus" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Добавить ученика" %}</button>
+    </form>
+</div>
+<div class="table-wrap">
+    <table>
+        <thead><tr><th>{% trans "ФИО" %}</th><th>{% trans "Класс" %}</th><th>{% trans "Статус" %}</th></tr></thead>
+        <tbody>
+            {% for s in students %}
+            <tr>
+                <td><strong>{{ s.last_name }} {{ s.first_name }}</strong></td>
+                <td>{{ s.grade|default:'-' }}</td>
+                <td><span class="badge badge-warning">{% trans "Нет доступа" %}</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" class="text-center text-muted p-2">{% trans "Нет учеников 1-4 класса" %}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</div>
+{% endblock %}

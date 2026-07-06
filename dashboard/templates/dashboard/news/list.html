@@ -1,0 +1,33 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% load i18n static %}
+{% block title %}{% trans "Новости" %}{% endblock %}
+{% block dashboard_content %}
+<div class="page-header">
+    <h1><i data-lucide="newspaper" style="width:2rem;height:2rem;vertical-align:middle;color:var(--color-primary);"></i> {% trans "Новости" %}</h1>
+    {% if request.user.role == 'superadmin' or request.user.role == 'school_admin' %}
+    <a href="{% url 'dashboard:news_create' %}" class="btn btn-primary"><i data-lucide="plus" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Создать" %}</a>
+    {% endif %}
+</div>
+<div class="flex flex-col gap-md">
+    {% for item in news %}
+    <div class="card">
+        <div class="flex justify-between">
+            <h3>{{ item.title }}</h3>
+            {% if not item.is_published %}<span class="badge badge-warning">{% trans "Черновик" %}</span>{% endif %}
+        </div>
+        <p class="text-muted mt-05">{{ item.content }}</p>
+        <div class="text-muted text-sm mt-1">
+            {{ item.author.get_full_name }} · {{ item.created_at|date:'d.m.Y H:i' }}
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+        <div class="mb-3">
+            <img src="{% static 'images/illustrations/empty_box.png' %}" alt="No News" class="animate-float" style="max-width: 100%; height: auto; max-height: 200px; object-fit: contain;">
+        </div>
+        <h3 style="font-family: var(--font-display); font-size: 1.5rem;">{% trans "Нет новостей" %}</h3>
+        <p>{% trans "Новости вашей школы будут появляться здесь." %}</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
