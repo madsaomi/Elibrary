@@ -10,7 +10,7 @@ def setup_periodic_tasks():
         name='Generate weekly challenges',
         defaults={
             'crontab': schedule_weekly,
-            'task': 'config.tasks.generate_weekly_challenges',
+            'task': 'apps.gamification.tasks.generate_weekly_challenges',
             'kwargs': json.dumps({}),
         },
     )

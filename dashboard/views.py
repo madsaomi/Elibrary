@@ -1,6 +1,6 @@
 import json
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.views.decorators.http import require_POST
 from django.db.models import Q, Count, Avg
@@ -78,7 +78,7 @@ def profile(request):
 def award_freeze_view(request, user_id):
     if request.user.role not in ('school_admin',):
         return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
-    target = User.objects.get(id=user_id)
+        target = get_object_or_404(User, id=user_id)
     if target.school != request.user.school:
         return render(request, 'dashboard/error.html', {'error': 'Пользователь из другой школы'})
     days = int(request.POST.get('days', 1))
@@ -100,7 +100,7 @@ def users_list(request):
 def reset_password_view(request, user_id):
     if request.user.role not in ('superadmin', 'school_admin'):
         return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
-    target = User.objects.get(id=user_id)
+    target = get_object_or_404(User, id=user_id)
     if request.user.role == 'school_admin' and target.school != request.user.school:
         return render(request, 'dashboard/error.html', {'error': 'Пользователь из другой школы'})
     if request.method == 'POST':
@@ -156,11 +156,14 @@ def textbook_stock_view(request):
     stocks = TextbookStock.objects.filter(school=school).select_related('textbook')
     if request.method == 'POST':
         textbook_id = request.POST.get('textbook_id')
-        total = int(request.POST.get('total_copies', 0))
+        try:
+            total = int(request.POST.get('total_copies', 0))
+        except (ValueError, TypeError):
+            total = 0
         stock, _ = TextbookStock.objects.get_or_create(school=school, textbook_id=textbook_id)
         added = total - stock.total_copies
         stock.total_copies = total
-        stock.available_copies = max(0, stock.available_copies + added)
+        stock.available_copies = max(0, min(total, stock.available_copies + added))
         stock.save()
         return redirect('dashboard:textbook_stock')
     textbooks = Textbook.objects.all()
@@ -188,7 +191,10 @@ def book_create(request):
     if request.method == 'POST':
         title = request.POST.get('title', '').strip()
         author = request.POST.get('author', '').strip()
-        total_copies = int(request.POST.get('total_copies', 1))
+        try:
+            total_copies = int(request.POST.get('total_copies', 1))
+        except (ValueError, TypeError):
+            total_copies = 1
         category_id = request.POST.get('category_id')
         cover = request.FILES.get('cover')
         if title:
@@ -209,7 +215,7 @@ def bulk_issue_to_class(request):
     classes = Class.objects.filter(school=request.user.school, status=Class.Status.ACTIVE)
     if request.method == 'POST':
         class_id = request.POST.get('class_id')
-        cls = Class.objects.get(id=class_id)
+        cls = get_object_or_404(Class, id=class_id)
         loans = issue_textbooks_to_class(request.user.school, cls, request.user)
         ActionLog.objects.create(
             school=request.user.school, user=request.user,
@@ -256,8 +262,8 @@ def issue_textbooks_view(request):
     if request.method == 'POST':
         student_id = request.POST.get('student_id')
         textbook_ids = request.POST.getlist('textbook_ids')
-        student = User.objects.get(id=student_id)
-        loans = issue_textbooks(request.user.school, student, textbook_ids, request.user, 'student')
+        student = get_object_or_404(User, id=student_id)
+        loans = issue_textbooks(request.user.school, student, textbook_ids, request.user)
         ActionLog.objects.create(
             school=request.user.school, user=request.user,
             action=ActionLog.ActionType.LOAN,
@@ -273,11 +279,11 @@ def issue_textbooks_view(request):
 def issue_textbooks_set_view(request, student_id):
     if request.user.role not in ('school_admin',):
         return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
-    student = User.objects.get(id=student_id)
+    student = get_object_or_404(User, id=student_id)
     textbook_set = get_student_textbook_set(student)
     if request.method == 'POST':
         textbook_ids = request.POST.getlist('textbook_ids')
-        loans = issue_textbooks(request.user.school, student, textbook_ids, request.user, 'student')
+        loans = issue_textbooks(request.user.school, student, textbook_ids, request.user)
         return redirect('dashboard:issue_textbooks_set_view', kwargs={'student_id': student_id})
     else:
         return render(request, 'dashboard/loans/issue_set.html', {
@@ -290,7 +296,7 @@ def issue_textbooks_set_view(request, student_id):
 def return_textbooks_view(request, student_id):
     if request.user.role not in ('school_admin',):
         return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
-    student = User.objects.get(id=student_id)
+    student = get_object_or_404(User, id=student_id)
     active_loans = TextbookLoan.objects.filter(student=student, status=TextbookLoan.Status.ACTIVE)
     if request.method == 'POST':
         loan_ids = request.POST.getlist('loan_ids')
@@ -322,8 +328,8 @@ def teacher_borrow_textbook(request):
         teacher = request.user
         if request.user.role == 'school_admin':
             teacher_id = request.POST.get('teacher_id')
-            teacher = User.objects.get(id=teacher_id)
-        loans = issue_textbooks(user.school, teacher, textbook_ids, request.user, 'teacher')
+            teacher = get_object_or_404(User, id=teacher_id)
+        loans = issue_textbooks(user.school, teacher, textbook_ids, request.user)
         return redirect('dashboard:my_loans')
     teachers = User.objects.filter(school=user.school, role=User.Role.TEACHER) if user.role == 'school_admin' else []
     return render(request, 'dashboard/loans/teacher_borrow.html', {
@@ -353,7 +359,10 @@ def activate_grade_5_view(request):
     if request.user.role not in ('school_admin',):
         return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
     if request.method == 'POST':
-        grade_number = int(request.POST.get('grade_number', 5))
+        try:
+            grade_number = int(request.POST.get('grade_number', 5))
+        except (ValueError, TypeError):
+            grade_number = 5
         academic_year = request.POST.get('academic_year', '')
         results = activate_grade_access(request.user.school, grade_number, academic_year)
         rows = [[r['student'].last_name + ' ' + r['student'].first_name, str(r['student'].grade), r['student'].login, r['password'] or '(уже есть)'] for r in results]
@@ -475,7 +484,7 @@ def teacher_books_view(request):
         borrower = user
         if request.user.role == 'school_admin':
             teacher_id = request.POST.get('teacher_id')
-            borrower = User.objects.get(id=teacher_id)
+            borrower = get_object_or_404(User, id=teacher_id)
         loans = issue_books(user.school, borrower, book_ids, request.user)
         return redirect('dashboard:my_loans')
     teachers = User.objects.filter(school=user.school, role=User.Role.TEACHER) if user.role == 'school_admin' else []
@@ -489,7 +498,7 @@ def teacher_books_view(request):
 def challenge_moderation_detail(request, challenge_id):
     if request.user.role not in ('school_admin',):
         return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
-    challenge = Challenge.objects.get(id=challenge_id)
+    challenge = get_object_or_404(Challenge, id=challenge_id)
     if request.method == 'POST':
         import json as _json
         questions_raw = request.POST.get('questions')
@@ -593,12 +602,15 @@ def manage_classes(request):
     school = request.user.school if request.user.role == 'school_admin' else None
     schools = School.objects.all() if request.user.role == 'superadmin' else []
     if request.method == 'POST':
-        number = int(request.POST.get('number'))
+        try:
+            number = int(request.POST.get('number'))
+        except (ValueError, TypeError):
+            return redirect('dashboard:manage_classes')
         parallel = request.POST.get('parallel', '').strip()
         language = request.POST.get('language', 'ru')
         academic_year = request.POST.get('academic_year', '')
         school_id = request.POST.get('school_id') or (school.id if school else None)
-        s = School.objects.get(id=school_id)
+        s = get_object_or_404(School, id=school_id)
         Class.objects.get_or_create(
             number=number, parallel=parallel, language=language,
             academic_year=academic_year, school=s,
@@ -622,7 +634,7 @@ def manage_subject_textbooks(request):
         class_id = request.POST.get('class_id')
         subject = request.POST.get('subject', '').strip()
         textbook_id = request.POST.get('textbook_id')
-        cls = Class.objects.get(id=class_id, school=school)
+        cls = get_object_or_404(Class, id=class_id, school=school)
         SubjectTextbook.objects.get_or_create(school_class=cls, subject=subject, textbook_id=textbook_id)
         return redirect('dashboard:manage_subject_textbooks')
     assignments = SubjectTextbook.objects.filter(school_class__school=school).select_related('school_class', 'textbook')
@@ -636,7 +648,7 @@ def manage_subject_textbooks(request):
 def student_detail(request, student_id):
     if request.user.role not in ('superadmin', 'school_admin'):
         return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
-    student = User.objects.get(id=student_id)
+    student = get_object_or_404(User, id=student_id)
     if request.user.role == 'school_admin' and student.school != request.user.school:
         return render(request, 'dashboard/error.html', {'error': 'Пользователь из другой школы'})
     textbook_loans = TextbookLoan.objects.filter(student=student).select_related('textbook')
@@ -691,12 +703,12 @@ def multi_class_teacher_borrow(request):
         teacher = user
         if request.user.role == 'school_admin':
             teacher_id = request.POST.get('teacher_id')
-            teacher = User.objects.get(id=teacher_id)
+            teacher = get_object_or_404(User, id=teacher_id)
         all_loans = []
         for class_id in class_ids:
-            cls = Class.objects.get(id=class_id)
+            cls = get_object_or_404(Class, id=class_id)
             for tb_id in textbook_ids:
-                loans = issue_textbooks(user.school, teacher, [tb_id], request.user, 'teacher')
+                loans = issue_textbooks(user.school, teacher, [tb_id], request.user)
                 all_loans.extend(loans)
         return redirect('dashboard:my_loans')
     teachers = User.objects.filter(school=user.school, role=User.Role.TEACHER) if user.role == 'school_admin' else []
@@ -714,13 +726,16 @@ def challenge_leaderboard(request):
     user_attempt = None
     grade_numbers = []
     if request.GET.get('challenge_id'):
-        selected = Challenge.objects.get(id=request.GET.get('challenge_id'))
+        selected = get_object_or_404(Challenge, id=request.GET.get('challenge_id'))
         qs = ChallengeAttempt.objects.filter(challenge=selected, is_completed=True).select_related('user', 'user__grade').order_by('-score')
         if request.user.role == 'school_admin':
             qs = qs.filter(user__school=request.user.school)
         grade_param = request.GET.get('grade_number')
         if grade_param:
-            qs = qs.filter(user__grade__number=int(grade_param))
+            try:
+                qs = qs.filter(user__grade__number=int(grade_param))
+            except (ValueError, TypeError):
+                pass
         all_attempts = list(qs)
         attempts = all_attempts[:10]
         current = next((a for a in all_attempts if a.user_id == request.user.id), None)
@@ -747,7 +762,7 @@ def student_challenge(request):
     attempt = ChallengeAttempt.objects.filter(user=user, is_completed=False).order_by('-started_at').first()
     if attempt:
         return render(request, 'dashboard/challenges/take.html', {
-            'questions': attempt.questions_data or attempt.challenge.questions,
+            'questions': attempt.challenge.questions,
             'attempt_id': str(attempt.id),
             'csrf_token': request.META.get('CSRF_COOKIE', ''),
         })
@@ -756,39 +771,38 @@ def student_challenge(request):
         status=Challenge.Status.PUBLISHED,
     ).order_by('-week_start').first()
     if active:
-        return redirect('student_challenge')
+        return redirect('dashboard:student_challenge')
     return redirect('dashboard:challenge_leaderboard')
 
 
 @login_required
+@require_POST
 def edit_profile(request):
-    if request.method == 'POST':
-        first_name = request.POST.get('first_name', '').strip()
-        last_name = request.POST.get('last_name', '').strip()
-        if first_name and last_name:
-            request.user.first_name = first_name
-            request.user.last_name = last_name
-            request.user.save()
+    first_name = request.POST.get('first_name', '').strip()
+    last_name = request.POST.get('last_name', '').strip()
+    if first_name and last_name:
+        request.user.first_name = first_name
+        request.user.last_name = last_name
+        request.user.save()
     return redirect('dashboard:profile')
 
 
 @login_required
+@require_POST
 def change_password(request):
-    if request.method == 'POST':
-        old = request.POST.get('old_password', '')
-        new = request.POST.get('new_password', '')
-        confirm = request.POST.get('confirm_password', '')
-        if not request.user.check_password(old):
-            return redirect('dashboard:profile')
-        if len(new) < 6:
-            return redirect('dashboard:profile')
-        if new != confirm:
-            return redirect('dashboard:profile')
-        request.user.set_password(new)
-        request.user.save()
-        from django.contrib.auth import update_session_auth_hash
-        update_session_auth_hash(request, request.user)
+    old = request.POST.get('old_password', '')
+    new = request.POST.get('new_password', '')
+    confirm = request.POST.get('confirm_password', '')
+    if not request.user.check_password(old):
         return redirect('dashboard:profile')
+    if len(new) < 6:
+        return redirect('dashboard:profile')
+    if new != confirm:
+        return redirect('dashboard:profile')
+    request.user.set_password(new)
+    request.user.save()
+    from django.contrib.auth import update_session_auth_hash
+    update_session_auth_hash(request, request.user)
     return redirect('dashboard:profile')
 
 
@@ -1132,7 +1146,7 @@ def transfer_depart(request):
     user_id = request.POST.get('user_id')
     action = request.POST.get('action', 'initiate')
     if action == 'initiate':
-        target = User.objects.get(id=user_id)
+        target = get_object_or_404(User, id=user_id)
         if target.school != request.user.school:
             return render(request, 'dashboard/error.html', {'error': 'User not in your school'})
         transfer, err = initiate_departure(target, request.user)
