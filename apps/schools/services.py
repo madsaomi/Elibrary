@@ -65,7 +65,7 @@ def auto_promote_classes(school, current_academic_year, next_academic_year, init
                 defaults={'status': Class.Status.ACTIVE},
             )
             promoted.append({'from': cls, 'to': new_cls, 'created': created})
-            cls.status = Class.Status.GRADUATED if cls.number == 11 else Class.Status.ACTIVE
+            cls.status = Class.Status.GRADUATED
             cls.save()
         else:
             cls.status = Class.Status.GRADUATED

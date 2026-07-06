@@ -63,6 +63,7 @@ def login_form_view(request):
     return redirect('dashboard:home')
 
 
+@require_POST
 def logout_form_view(request):
     auth_logout(request)
     return redirect('accounts:login')

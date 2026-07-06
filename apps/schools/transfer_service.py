@@ -68,7 +68,7 @@ def accept_transfer(user_id, to_school, initiated_by):
         return None, 'Нет пользователя, ожидающего перевода'
 
     user = User.objects.get(id=user_id)
-    old_school = user.school
+    old_school = transfer.from_school
     user.school = to_school
     user.transfer_status = 'completed'
     user.save()
@@ -105,6 +105,8 @@ def cancel_transfer(user_id):
         return None, 'Нет активного перевода'
 
     user = User.objects.get(id=user_id)
+    if transfer.status == TransferLog.Status.PENDING and transfer.from_school:
+        user.school = transfer.from_school
     user.transfer_status = ''
     user.save()
 

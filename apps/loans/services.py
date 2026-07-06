@@ -53,7 +53,7 @@ def issue_textbooks_to_class(school, class_obj, issued_by):
     all_loans = []
     for student in students:
         for assignment in assignments:
-            stock = TextbookStock.objects.filter(school=school, textbook=assignment.textbook).first()
+            stock = TextbookStock.objects.filter(school=school, textbook=assignment.textbook).select_for_update().first()
             if not stock or stock.available_copies < 1:
                 continue
             existing = TextbookLoan.objects.filter(
@@ -159,7 +159,7 @@ def return_textbooks(loan_ids, returned_by, forced=False):
 def issue_books(school, user, book_ids, issued_by):
     loans = []
     for bk_id in book_ids:
-        book = RegularBook.objects.filter(school=school, id=bk_id).first()
+        book = RegularBook.objects.filter(school=school, id=bk_id).select_for_update().first()
         if not book or book.available_copies < 1:
             continue
         book.available_copies -= 1

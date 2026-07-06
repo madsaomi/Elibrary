@@ -59,11 +59,49 @@ tests/
 
 ---
 
-## 📅 Последнее обновление: 2026-07-06
+## 📅 Последнее обновление: 2026-07-07
 
 ---
 
 ## 🛠️ Текущий статус
+
+### ✅ Завершённая задача #10 — Аудит кода и исправление критических багов
+**Дата:** 2026-07-07
+**Проблема:** В проекте были критические баги: сломанный функционал переводов между школами, нерабочие челленджи из-за несоответствия ключей, эскалация привилегий, race conditions, открытые ViewSet'ы без permission.
+
+**Что было сделано:**
+- `[x]` **TransferLog.to_school** — добавлено `null=True` (модель schools/models.py) — раньше `initiate_departure` падал с IntegrityError
+- `[x]` **accept_transfer** — берёт `old_school` из `transfer.from_school` вместо `user.school` (который None после departure)
+- `[x]` **cancel_transfer** — восстанавливает school/grade из TransferLog при отмене
+- `[x]` **Челленджи** — исправлено несоответствие ключей `correct_index` vs `correct` в views.py start/finish
+- `[x]` **auto_promote_classes** — исправлено: старые классы теперь помечаются GRADUATED вместо ACTIVE
+- `[x]` **create_user** — блокирует `is_superuser`/`is_staff` в extra_fields (эскалация привилегий)
+- `[x]` **ChallengeViewSet** — добавлен `permission_classes = [IsSchoolAdminOrSuperAdmin]`
+- `[x]` **NewsViewSet** — добавлен `permission_classes = [IsSchoolAdminOrSuperAdmin]`
+- `[x]` **ActionLogViewSet** — добавлен `permission_classes = [IsSchoolAdminOrSuperAdmin]`
+- `[x]` **logout_form_view** — добавлен `@require_POST` (CSRF атака через GET)
+- `[x]` **issue_textbooks_to_class** — добавлен `select_for_update()` (race condition)
+- `[x]` **issue_books** — добавлен `select_for_update()` (race condition)
+
+**Затронутые файлы:**
+- `apps/schools/models.py` — TransferLog.to_school nullable
+- `apps/schools/transfer_service.py` — accept_transfer + cancel_transfer
+- `apps/schools/services.py` — auto_promote_classes
+- `apps/gamification/views.py` — ChallengeViewSet permissions + correct_index fix
+- `apps/accounts/managers.py` — create_user privilege escalation
+- `apps/accounts/views.py` — logout CSRF
+- `apps/notifications/views.py` — NewsViewSet permissions
+- `apps/stats/views.py` — ActionLogViewSet permissions
+- `apps/loans/services.py` — select_for_update on issue_textbooks_to_class + issue_books
+
+**Не исправлено (требует тестирования):**
+- `return_books` не проверяет due_date для обычных книг (всегда начисляет 30 XP)
+- N+1 запросы в get_student_textbook_set
+- `Streak` OneToOneField конфликтует со school FK при переводе ученика
+- `update_streak` не обёрнут в @transaction.atomic
+- Сервисные viewsets используют `fields = '__all__'` в сериализаторах
+
+---
 
 ### 🔄 Запланированные этапы (Roadmap)
 **Описание:** План дальнейшей реализации согласно технической спецификации проекта.

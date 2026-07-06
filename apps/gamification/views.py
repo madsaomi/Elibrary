@@ -13,6 +13,7 @@ from apps.gamification.serializers import (
     ChallengeSerializer, ChallengeAttemptSerializer,
 )
 from apps.gamification.services import add_xp, update_streak
+from api.v1.permissions import IsSchoolAdminOrSuperAdmin
 
 
 class XPTransactionViewSet(viewsets.ReadOnlyModelViewSet):
@@ -70,6 +71,7 @@ class StreakViewSet(viewsets.ReadOnlyModelViewSet):
 class ChallengeViewSet(viewsets.ModelViewSet):
     queryset = Challenge.objects.all()
     serializer_class = ChallengeSerializer
+    permission_classes = [IsSchoolAdminOrSuperAdmin]
 
     def _check_moderator(self, request):
         if request.user.role not in ('school_admin', 'superadmin'):
@@ -127,7 +129,7 @@ class ChallengeAttemptViewSet(viewsets.ModelViewSet):
         if len(challenge.questions) != 15:
             return Response({'error': 'Челлендж должен содержать ровно 15 вопросов'}, status=status.HTTP_400_BAD_REQUEST)
         for i, q in enumerate(challenge.questions):
-            if len(q.get('options', [])) != 3 or 'correct' not in q:
+            if len(q.get('options', [])) != 3 or ('correct' not in q and 'correct_index' not in q):
                 return Response({'error': f'Вопрос {i+1} должен иметь ровно 3 варианта ответа'}, status=status.HTTP_400_BAD_REQUEST)
         order = list(range(len(challenge.questions)))
         random.shuffle(order)
@@ -164,7 +166,8 @@ class ChallengeAttemptViewSet(viewsets.ModelViewSet):
         score = 0
         for idx, answer in attempt.answers.items():
             question = attempt.challenge.questions[int(idx)]
-            if str(answer) == str(question.get('correct', '')):
+            correct = question.get('correct_index', question.get('correct', ''))
+            if str(answer) == str(correct):
                 score += 1
         attempt.score = score
         attempt.is_completed = True
