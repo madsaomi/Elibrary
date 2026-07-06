@@ -1,4 +1,7 @@
 from django.apps import AppConfig
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class CoreConfig(AppConfig):
@@ -10,5 +13,5 @@ class CoreConfig(AppConfig):
         try:
             from config.beat_schedule import setup_periodic_tasks
             setup_periodic_tasks()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning('Failed to setup periodic tasks: %s', e)

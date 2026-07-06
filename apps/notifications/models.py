@@ -24,17 +24,6 @@ class News(UUIDPrimaryKeyMixin, TimestampMixin, models.Model):
     def __str__(self):
         return self.title
 
-    @classmethod
-    def visible_to(cls, user):
-        if user.is_superuser or user.role == 'superadmin':
-            return cls.objects.all()
-        if user.role == 'school_admin':
-            return cls.objects.filter(
-                models.Q(author_level=News.AuthorLevel.SUPERADMIN, school__isnull=True)
-                | models.Q(school=user.school)
-            )
-        return cls.objects.filter(school=user.school, is_published=True)
-
 
 class Notification(UUIDPrimaryKeyMixin, TimestampMixin, models.Model):
     class Type(models.TextChoices):

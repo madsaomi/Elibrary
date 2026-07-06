@@ -48,7 +48,7 @@ def generate_school_admin_excel(school, admin_login, admin_password):
 def generate_students_excel(users_with_passwords):
     headers = ['ФИО', 'Класс', 'Логин', 'Пароль']
     rows = [
-        [f'{u.last_name} {u.first_name}', str(u.grade) if u.grade else '', u.login, pwd]
+        [f'{u.last_name} {u.first_name}', f'{u.grade.number}{u.grade.parallel}' if u.grade else '', u.login, pwd]
         for u, pwd in users_with_passwords
     ]
     return export_to_excel(headers, rows, filename='students.xlsx')

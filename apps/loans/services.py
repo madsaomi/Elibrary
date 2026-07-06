@@ -19,13 +19,21 @@ def get_student_textbook_set(student):
     if not student.grade:
         return []
     assignments = SubjectTextbook.objects.filter(school_class=student.grade).select_related('textbook')
+    assignment_textbook_ids = [a.textbook_id for a in assignments]
+
+    active_loans = TextbookLoan.objects.filter(
+        student=student, textbook_id__in=assignment_textbook_ids,
+        status__in=[TextbookLoan.Status.ACTIVE, TextbookLoan.Status.OVERDUE],
+    )
+    loan_map = {loan.textbook_id: loan for loan in active_loans}
+
+    stocks = TextbookStock.objects.filter(school=student.school, textbook_id__in=assignment_textbook_ids)
+    stock_map = {stock.textbook_id: stock for stock in stocks}
+
     result = []
     for assignment in assignments:
-        active_loan = TextbookLoan.objects.filter(
-            student=student, textbook=assignment.textbook,
-            status__in=[TextbookLoan.Status.ACTIVE, TextbookLoan.Status.OVERDUE],
-        ).first()
-        stock = TextbookStock.objects.filter(school=student.school, textbook=assignment.textbook).first()
+        active_loan = loan_map.get(assignment.textbook_id)
+        stock = stock_map.get(assignment.textbook_id)
         result.append({
             'assignment': assignment,
             'textbook': assignment.textbook,
@@ -78,10 +86,9 @@ def _hmac_secret():
 
 
 def generate_qr_token(payload: dict, ttl_seconds=120):
-    payload['iat'] = int(time.time())
-    payload['exp'] = int(time.time()) + ttl_seconds
-    payload['jti'] = str(uuid.uuid4())
-    message = json.dumps(payload, separators=(',', ':'), sort_keys=True)
+    now = int(time.time())
+    token_payload = {**payload, 'iat': now, 'exp': now + ttl_seconds, 'jti': str(uuid.uuid4())}
+    message = json.dumps(token_payload, separators=(',', ':'), sort_keys=True)
     signature = hmac.new(_hmac_secret(), message.encode('utf-8'), hashlib.sha256).hexdigest()
     return f'{message}.{signature}'
 
@@ -118,11 +125,11 @@ def issue_textbooks(school, student, textbook_ids, issued_by):
         existing = TextbookLoan.objects.filter(student=student, textbook_id=tb_id, status__in=[TextbookLoan.Status.ACTIVE, TextbookLoan.Status.OVERDUE]).exists()
         if existing:
             continue
-        due = (timezone.now().date() + timezone.timedelta(days=7 if issued_by.role == 'teacher' else 365))
+        due = (timezone.now().date() + timezone.timedelta(days=7 if issued_by.role == User.Role.TEACHER else 365))
         loan = TextbookLoan.objects.create(
             textbook_id=tb_id, student=student, issued_by=issued_by,
             due_date=due, status=TextbookLoan.Status.ACTIVE,
-            school=school, borrower_type='teacher' if issued_by.role == 'teacher' else 'student',
+            school=school, borrower_type='teacher' if issued_by.role == User.Role.TEACHER else 'student',
         )
         stock.available_copies -= 1
         stock.save()
@@ -187,8 +194,11 @@ def return_books(loan_ids, forced=False):
             book.available_copies += 1
             book.save()
         if not forced:
-            add_xp(loan.user, 30, 'return_ontime', school=loan.school)
-            award_comeback_bonus(loan.user)
+            if loan.due_date and loan.due_date < timezone.now().date():
+                add_xp(loan.user, 15, 'return_late', school=loan.school)
+            else:
+                add_xp(loan.user, 30, 'return_ontime', school=loan.school)
+                award_comeback_bonus(loan.user)
             update_streak(loan.user)
     return loans
 

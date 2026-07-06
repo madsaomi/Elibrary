@@ -123,7 +123,10 @@ class ChallengeAttemptViewSet(viewsets.ModelViewSet):
     def start(self, request):
         import random
         challenge_id = request.data.get('challenge_id')
-        challenge = Challenge.objects.get(id=challenge_id)
+        try:
+            challenge = Challenge.objects.get(id=challenge_id)
+        except Challenge.DoesNotExist:
+            return Response({'error': 'Челлендж не найден'}, status=status.HTTP_404_NOT_FOUND)
         if challenge.status != Challenge.Status.PUBLISHED:
             return Response({'error': 'Челлендж ещё не опубликован'}, status=status.HTTP_400_BAD_REQUEST)
         if len(challenge.questions) != 15:

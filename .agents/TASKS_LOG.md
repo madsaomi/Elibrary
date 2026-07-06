@@ -95,11 +95,48 @@ tests/
 - `apps/loans/services.py` — select_for_update on issue_textbooks_to_class + issue_books
 
 **Не исправлено (требует тестирования):**
-- `return_books` не проверяет due_date для обычных книг (всегда начисляет 30 XP)
-- N+1 запросы в get_student_textbook_set
-- `Streak` OneToOneField конфликтует со school FK при переводе ученика
-- `update_streak` не обёрнут в @transaction.atomic
-- Сервисные viewsets используют `fields = '__all__'` в сериализаторах
+- N+1 запросы в return_textbooks (missing select_related)
+- Streak OneToOneField конфликтует со school FK при переводе ученика
+- create_regular_book нет дедупликации
+- generate_challenge_questions нет timeout на API вызов
+
+### ✅ Завершённая задача #11 — Исправление средних и низких багов
+**Дата:** 2026-07-07
+**Проблема:** После первого раунда аудита оставались баги средней и низкой степени серьёзности: не проверялся due_date при возврате книг, мутация payload в QR, N+1 запросы, открытые сериализаторы, дублирование логики.
+
+**Что было сделано:**
+- `[x]` **return_books** — добавлена проверка due_date для обычных книг (раньше всегда начислялся 30 XP)
+- `[x]` **generate_qr_token** — убрана мутация входного payload + устранён двойной вызов time.time()
+- `[x]` **issue_textbooks** — заменено строковое сравнение роли на enum (`User.Role.TEACHER`)
+- `[x]` **update_streak** — обёрнут в `@transaction.atomic`
+- `[x]` **get_student_textbook_set** — устранены N+1 запросы (batch-загрузка loans и stocks)
+- `[x]` **cancel_transfer** — добавлено восстановление grade (раньше терялся)
+- `[x]` **TransferLog.from_grade** — новое поле для сохранения класса при переводе
+- `[x]` **News.visible_to** — убран дублирующий classmethod из модели (оставлен только сервис)
+- `[x]` **Challenge start** — добавлена обработка DoesNotExist (404 вместо 500)
+- `[x]` **award_comeback_bonus** — Level.objects.get(number=1) заменён на fallback
+- `[x]` **core/apps.py** — ошибки periodic tasks логируются вместо проглатывания
+- `[x]` **core/services.py** — grade export показывает номер+параллель без имени школы
+- `[x]` **Сериализаторы gamification** — добавлены read_only_fields
+- `[x]` **Сериализаторы loans** — добавлены read_only_fields
+
+**Затронутые файлы:**
+- `apps/loans/services.py` — return_books, generate_qr_token, issue_textbooks, get_student_textbook_set
+- `apps/gamification/services.py` — update_streak, award_comeback_bonus
+- `apps/gamification/views.py` — Challenge start
+- `apps/gamification/serializers.py` — read_only_fields
+- `apps/loans/serializers.py` — read_only_fields
+- `apps/schools/models.py` — TransferLog.from_grade
+- `apps/schools/transfer_service.py` — initiate_departure, cancel_transfer
+- `apps/notifications/models.py` — удалён дублирующий visible_to
+- `apps/core/apps.py` — логирование ошибок
+- `apps/core/services.py` — grade export
+
+**Не исправлено (низкий приоритет):**
+- N+1 запросы в return_textbooks (missing select_related)
+- Streak OneToOneField конфликтует со school FK при переводе ученика
+- create_regular_book нет дедупликации
+- generate_challenge_questions нет timeout на API вызов
 
 ---
 

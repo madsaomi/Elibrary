@@ -22,6 +22,7 @@ def initiate_departure(user, initiated_by):
     transfer = TransferLog.objects.create(
         user=user,
         from_school=user.school,
+        from_grade=user.grade,
         to_school=None,
         initiated_by=initiated_by,
         status=TransferLog.Status.DEPARTING,
@@ -105,8 +106,11 @@ def cancel_transfer(user_id):
         return None, 'Нет активного перевода'
 
     user = User.objects.get(id=user_id)
-    if transfer.status == TransferLog.Status.PENDING and transfer.from_school:
-        user.school = transfer.from_school
+    if transfer.status == TransferLog.Status.PENDING:
+        if transfer.from_school:
+            user.school = transfer.from_school
+        if transfer.from_grade:
+            user.grade = transfer.from_grade
     user.transfer_status = ''
     user.save()
 

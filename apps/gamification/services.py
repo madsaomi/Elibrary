@@ -76,7 +76,7 @@ def award_comeback_bonus(user, school=None):
     if school is None:
         school = user.school
     tx = XPTransaction.objects.create(user=user, amount=bonus_amount, reason=XPTransaction.Reason.COMEBACK_BONUS, school=school)
-    user_level, _ = UserLevel.objects.get_or_create(user=user, defaults={'level': Level.objects.get(number=1)})
+    user_level, _ = UserLevel.objects.get_or_create(user=user, defaults={'level': Level.objects.first() or Level.objects.create(number=1, xp_required=0, bonus_percent=0)})
     user_level.total_xp += bonus_amount
     user_level.save()
     update_user_level(user_level)
@@ -118,6 +118,7 @@ def check_achievements(user):
             add_xp(user, ach_config.get('xp_reward', 50), XPTransaction.Reason.ACHIEVEMENT)
 
 
+@transaction.atomic
 def update_streak(user):
     if not user.is_active_for_gamification:
         return None
