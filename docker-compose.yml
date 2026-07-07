@@ -9,11 +9,73 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/library
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             daphne config.asgi:application --port 8000 --bind 0.0.0.0"
+
+  worker:
+    build: .
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/library
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A config worker --loglevel=info
+
+  beat:
+    build: .
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/library
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A config beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 
 volumes:
   pgdata:
+  static_volume:
+  media_volume:
