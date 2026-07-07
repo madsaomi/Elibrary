@@ -20,3 +20,5 @@ openpyxl>=3,<4
 django-storages>=1,<2
 requests>=2,<3
 google-genai>=0.2.0,<1
+drf-spectacular>=0.28,<1
+django-redis>=5,<6

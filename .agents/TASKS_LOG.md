@@ -177,6 +177,33 @@ tests/
 
 **Статус:** Этап 5 roadmap завершён. Все 5 этапов выполнены.
 
+### ✅ Завершённая задача #14 — Тесты для исправленных багов
+**Дата:** 2026-07-07
+**Проблема:** 29 исправленных багов не были покрыты тестами.
+
+**Что было сделано:**
+- `[x]` Создан файл `tests/test_bugfixes.py` с 14 тестами
+- `[x]` Тесты покрывают: TransferLog, accept_transfer, cancel_transfer, Challenge keys, Class promotion, Privilege escalation, Permissions, Race conditions, Logout CSRF, QR token mutation, Overdue XP, N+1 queries, Deduplication
+
+### ✅ Завершённая задача #15 — CI/CD + Swagger + Кэширование + Healthcheck
+**Дата:** 2026-07-07
+
+**Что было сделано:**
+- `[x]` **GitHub Actions** — `.github/workflows/ci.yml` (тесты + PostgreSQL + Redis)
+- `[x]` **Swagger/OpenAPI** — drf-spectacular, эндпоинты `/api/docs/` и `/api/redoc/`
+- `[x]` **Redis кэш** — настроен Django cache backend
+- `[x]` **Healthcheck** — `/health/` endpoint с проверкой PostgreSQL + Redis
+- `[x]` **Structured logging** — форматированные логи с таймстемпами
+
+**Затронутые файлы:**
+- `tests/test_bugfixes.py` (новый)
+- `.github/workflows/ci.yml` (новый)
+- `config/settings.py` — drf_spectacular, CACHES, LOGGING
+- `config/urls.py` — schema, swagger, redoc, healthcheck
+- `apps/core/views.py` (новый)
+- `apps/core/urls.py` (новый)
+- `requirements.txt` — drf-spectacular, django-redis
+
 ---
 
 ### 🔄 Запланированные этапы (Roadmap)
