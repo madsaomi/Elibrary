@@ -1,36 +1,81 @@
 {% extends 'dashboard/base_dashboard.html' %}
 {% load i18n %}
-{% block title %}{% trans "Пользователи — Библиотечная система" %}{% endblock %}
+{% block title %}{% trans "Ученики — Библиотечная система" %}{% endblock %}
 {% block dashboard_content %}
 <div class="fade-in-up">
+
 <div class="page-header">
-    <h1><i data-lucide="users" style="width:2rem;height:2rem;vertical-align:middle;color:var(--color-primary);"></i> {% trans "Пользователи" %}</h1>
-    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-        <a href="{% url 'dashboard:import_csv' %}" class="btn btn-outline"><i data-lucide="download" style="width:1.15rem;height:1.15rem;"></i> {% trans "Импорт учеников" %}</a>
-        <a href="{% url 'dashboard:export_students' %}" class="btn btn-accent"><i data-lucide="file-spreadsheet" style="width:1.15rem;height:1.15rem;"></i> Excel (Все)</a>
-        <a href="{% url 'dashboard:return_list_export' %}?debtors_only=1" class="btn btn-warning"><i data-lucide="alert-triangle" style="width:1.15rem;height:1.15rem;"></i> {% trans "Должники" %}</a>
-        <a href="{% url 'dashboard:return_list_export' %}" class="btn btn-outline"><i data-lucide="book-open" style="width:1.15rem;height:1.15rem;"></i> {% trans "Обходной (Май)" %}</a>
+    <h1><i data-lucide="users" class="icon-xl icon-primary"></i> {% trans "Ученики" %}</h1>
+    <div class="flex items-center gap-sm flex-wrap">
+        <a href="{% url 'dashboard:import_csv' %}" class="btn btn-primary"><i data-lucide="upload" class="icon-md"></i> {% trans "Импорт CSV" %}</a>
+        <a href="{% url 'dashboard:manage_classes' %}" class="btn btn-outline"><i data-lucide="school" class="icon-md"></i> {% trans "Классы" %}</a>
     </div>
 </div>
-<div class="table-wrap mb-4">
+
+<div class="card mb-3 p-2 flex items-center gap-sm flex-wrap">
+    <form method="get" class="flex items-center gap-sm" style="flex:1;">
+        <input type="search" name="q" value="{{ q }}" placeholder="{% trans 'Поиск по имени или логину...' %}" class="form-input" style="max-width:200px;">
+        <select name="role" class="form-input" style="max-width:140px;">
+            <option value="">{% trans "Все роли" %}</option>
+            <option value="student"{% if role_filter == 'student' %} selected{% endif %}>{% trans "Ученики" %}</option>
+            <option value="teacher"{% if role_filter == 'teacher' %} selected{% endif %}>{% trans "Учителя" %}</option>
+            <option value="school_admin"{% if role_filter == 'school_admin' %} selected{% endif %}>{% trans "Админы" %}</option>
+        </select>
+        <button type="submit" class="btn btn-outline btn-sm"><i data-lucide="search" class="icon-sm"></i></button>
+    </form>
+    <div class="flex items-center gap-sm">
+        <span class="text-muted" style="font-size:0.8125rem;">{{ stats.students }} {% trans "уч." %} · {{ stats.teachers }} {% trans "преп." %} · {{ stats.active }} {% trans "акт." %}</span>
+        <a href="{% url 'dashboard:export_students' %}" class="btn btn-sm btn-ghost" title="{% trans 'Excel' %}"><i data-lucide="file-spreadsheet" class="icon-sm"></i></a>
+        <a href="{% url 'dashboard:return_list_export' %}?debtors_only=1" class="btn btn-sm btn-ghost" title="{% trans 'Должники' %}"><i data-lucide="alert-triangle" class="icon-sm"></i></a>
+    </div>
+</div>
+
+<div class="table-wrap">
     <table>
         <thead>
-            <tr><th>{% trans "Логин" %}</th><th>{% trans "ФИО" %}</th><th>{% trans "Роль" %}</th><th>{% trans "Класс" %}</th><th>{% trans "Статус" %}</th></tr>
+            <tr><th>{% trans "ФИО" %}</th><th>{% trans "Логин" %}</th><th>{% trans "Роль" %}</th><th>{% trans "Класс" %}</th><th>{% trans "Статус" %}</th><th></th></tr>
         </thead>
         <tbody>
             {% for u in users %}
             <tr>
-                <td>{{ u.login }}</td>
                 <td><strong>{{ u.last_name }} {{ u.first_name }}</strong></td>
+                <td style="color:var(--color-text-muted);">{{ u.login }}</td>
                 <td><span class="badge badge-info">{{ u.get_role_display }}</span></td>
-                <td>{{ u.grade|default:'-' }}</td>
+                <td>
+                    {% if u.grade %}
+                    <a href="{% url 'dashboard:users' %}?grade={{ u.grade.number }}" style="text-decoration:none;">{{ u.grade.number }}{{ u.grade.parallel }}</a>
+                    {% else %}<span class="text-muted">—</span>{% endif %}
+                </td>
                 <td>{% if u.is_active %}<span class="badge badge-success">{% trans "Активен" %}</span>{% else %}<span class="badge badge-muted">{% trans "Неактивен" %}</span>{% endif %}</td>
+                <td class="text-right">
+                    <a href="{% url 'dashboard:issue_textbooks' %}?student_id={{ u.id }}" class="btn btn-sm btn-ghost" title="{% trans 'Выдать' %}"><i data-lucide="send" class="icon-sm"></i></a>
+                </td>
             </tr>
             {% empty %}
-            <tr><td colspan="5" class="text-center text-muted p-2">{% trans "Нет пользователей" %}</td></tr>
+            <tr><td colspan="6" class="text-center text-muted p-3">
+                <i data-lucide="users" class="icon-2xl icon-faded mb-1"></i>
+                <p>{% trans "Нет пользователей" %}</p>
+                <div class="flex justify-center gap-sm mt-1">
+                    <a href="{% url 'dashboard:import_csv' %}" class="btn btn-primary btn-sm">{% trans "Импортировать учеников" %}</a>
+                    <a href="{% url 'dashboard:manage_classes' %}" class="btn btn-outline btn-sm">{% trans "Создать классы" %}</a>
+                </div>
+            </td></tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+{% if users.paginator.num_pages > 1 %}
+<div class="flex justify-center gap-sm mt-3">
+    {% if users.has_previous %}
+    <a href="?page={{ users.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}" class="btn btn-outline btn-sm">←</a>
+    {% endif %}
+    <span class="text-muted" style="padding:0.375rem 0.5rem;">{{ users.number }} / {{ users.paginator.num_pages }}</span>
+    {% if users.has_next %}
+    <a href="?page={{ users.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}" class="btn btn-outline btn-sm">→</a>
+    {% endif %}
+</div>
+{% endif %}
+
 </div>
 {% endblock %}

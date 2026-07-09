@@ -11,10 +11,6 @@ from apps.schools.models import TransferLog
 def initiate_departure(user, initiated_by):
     if TransferLog.objects.filter(user=user, status__in=[TransferLog.Status.DEPARTING, TransferLog.Status.PENDING]).exists():
         return None, 'У пользователя уже есть активный запрос на перевод'
-    active_textbook_loans = TextbookLoan.objects.filter(student=user, status=TextbookLoan.Status.ACTIVE)
-    active_book_loans = RegularBookLoan.objects.filter(user=user, status=RegularBookLoan.Status.ACTIVE)
-    if active_textbook_loans.exists() or active_book_loans.exists():
-        return None, 'Не все книги и учебники сданы'
 
     user_level = UserLevel.objects.filter(user=user).first()
     xp_before = user_level.total_xp if user_level else 0
@@ -43,11 +39,6 @@ def complete_departure(user_id, initiated_by):
     if not transfer:
         return None, 'Нет активного запроса на уход'
 
-    active_textbook_loans = TextbookLoan.objects.filter(student_id=user_id, status=TextbookLoan.Status.ACTIVE)
-    active_book_loans = RegularBookLoan.objects.filter(user_id=user_id, status=RegularBookLoan.Status.ACTIVE)
-    if active_textbook_loans.exists() or active_book_loans.exists():
-        return None, 'Не все книги и учебники сданы'
-
     user = User.objects.get(id=user_id)
     user.school = None
     user.grade = None
@@ -74,9 +65,8 @@ def accept_transfer(user_id, to_school, initiated_by):
     user.transfer_status = 'completed'
     user.save()
 
-    if user.role == User.Role.TEACHER:
-        TextbookLoan.objects.filter(student=user, borrower_type='teacher', school=old_school).update(school=to_school)
-        RegularBookLoan.objects.filter(user=user, school=old_school).update(school=to_school)
+    TextbookLoan.objects.filter(student=user, school=old_school).update(school=to_school)
+    RegularBookLoan.objects.filter(user=user, school=old_school).update(school=to_school)
 
     user_level = UserLevel.objects.filter(user=user).first()
     if user_level:

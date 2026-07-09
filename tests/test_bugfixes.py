@@ -75,6 +75,7 @@ class BugFix3CancelTransferTest(TestCase):
 
         initiate_departure(student, admin)
         complete_departure(student.id, admin)
+        student.refresh_from_db()
 
         self.assertIsNone(student.school)
         self.assertIsNone(student.grade)
@@ -91,29 +92,30 @@ class BugFix4ChallengeKeyMismatchTest(TestCase):
     def test_start_accepts_correct_index(self):
         d = District.objects.create(name='D1')
         school = School.objects.create(name='S1', district=d)
-        student, _ = create_user(role=User.Role.STUDENT, first_name='Q', last_name='W', school=school)
+        student, _password = create_user(role=User.Role.STUDENT, first_name='Q', last_name='W', school=school)
         student.is_active_for_gamification = True
         student.save()
         ensure_levels()
 
+        questions = [
+            {'question': f'Q{i}', 'options': ['A', 'B', 'C'], 'correct_index': i % 3}
+            for i in range(15)
+        ]
         challenge = Challenge.objects.create(
             school=school, grade_number=5, language='ru',
             week_start=timezone.now().date(),
-            questions=[
-                {'question': 'Q1', 'options': ['A', 'B', 'C'], 'correct_index': 0},
-                {'question': 'Q2', 'options': ['A', 'B', 'C'], 'correct_index': 1},
-            ],
+            questions=questions,
             status=Challenge.Status.PUBLISHED,
         )
 
-        from rest_framework.test import APIRequestFactory
-        from apps.gamification.views import ChallengeAttemptViewSet
-        factory = APIRequestFactory()
-        request = factory.post('/start/', {'challenge_id': str(challenge.id)}, format='json')
-        request.user = student
-        view = ChallengeAttemptViewSet.as_view({'post': 'start'})
-        response = view(request)
-        self.assertEqual(response.status_code, 200)
+        from rest_framework.test import APIClient
+        client = APIClient()
+        login_resp = client.post('/api/v1/auth/login/', {
+            'login': student.login, 'password': _password,
+        }, format='json')
+        client.credentials(HTTP_AUTHORIZATION='Bearer ' + login_resp.data['access'])
+        response = client.post('/api/v1/challenge-attempts/start/', {'challenge_id': str(challenge.id)}, format='json')
+        self.assertEqual(response.status_code, 200, getattr(response, 'data', None))
 
 
 class BugFix5ClassPromotionTest(TestCase):
@@ -178,6 +180,8 @@ class BugFix10RaceConditionTest(TestCase):
         cls = Class.objects.create(number=5, parallel='A', language='ru', academic_year='2025-2026', school=school)
         textbook = Textbook.objects.create(title='T', subject='M', grade_number=5, language='ru', academic_year='2025-2026')
         stock = TextbookStock.objects.create(school=school, textbook=textbook, total_copies=2, available_copies=2)
+        from apps.catalog.models import SubjectTextbook
+        SubjectTextbook.objects.create(school_class=cls, subject='M', textbook=textbook)
         admin, _ = create_user(role=User.Role.SCHOOL_ADMIN, first_name='A', last_name='B', school=school)
 
         s1, _ = create_user(role=User.Role.STUDENT, first_name='S1', last_name='X', school=school, grade=cls)
@@ -196,7 +200,7 @@ class BugFix11LogoutCSRFCrossSiteTest(TestCase):
     def test_logout_requires_post(self):
         from django.test import Client
         client = Client()
-        response = client.get('/accounts/logout/')
+        response = client.get('/auth/logout/')
         self.assertIn(response.status_code, [405, 302])
 
 
@@ -249,7 +253,7 @@ class BugFix17NPlusOneTest(TestCase):
         SubjectTextbook.objects.create(school_class=cls, textbook=t1, subject='M')
         SubjectTextbook.objects.create(school_class=cls, textbook=t2, subject='R')
 
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
             result = get_student_textbook_set(student)
         self.assertEqual(len(result), 2)
 

@@ -2,7 +2,7 @@
 {% load i18n %}
 {% block title %}{% trans "Добавить книгу" %}{% endblock %}
 {% block dashboard_content %}
-<div class="page-header"><h1><i data-lucide="book-open" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Добавить книгу" %}</h1><a href="{% url 'dashboard:books' %}" class="btn btn-outline">← {% trans "Назад" %}</a></div>
+<div class="page-header"><h1><i data-lucide="book-open" class="icon-xl icon-primary"></i> {% trans "Добавить книгу" %}</h1><a href="{% url 'dashboard:books' %}" class="btn btn-outline btn-sm"><i data-lucide="arrow-left" class="icon-sm"></i> {% trans "Назад" %}</a></div>
 <div class="card max-w-500">
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}

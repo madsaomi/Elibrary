@@ -7,6 +7,6 @@
         <div class="notif-time">{{ n.created_at|timesince }}</div>
     </a>
     {% empty %}
-    <div class="notif-empty">Нет уведомлений</div>
+    <div class="notif-empty">{% trans "Нет уведомлений" %}</div>
     {% endfor %}
 </div>

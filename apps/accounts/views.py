@@ -2,6 +2,7 @@ from django.contrib.auth import login as django_login
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
+from django.utils.translation import gettext as _
 
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -59,7 +60,7 @@ def login_form_view(request):
     password = request.POST.get('password')
     user = auth_login(request, login, password)
     if user is None:
-        return render(request, 'accounts/login.html', {'error': 'Неверный логин или пароль'})
+        return render(request, 'accounts/login.html', {'error': _('Неверный логин или пароль')})
     return redirect('dashboard:home')
 
 

@@ -12,6 +12,19 @@
     <script src="https://unpkg.com/htmx.org@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script>
+      // Единая тема для Chart.js (адаптация под светлую/тёмную)
+      (function() {
+        if (!window.Chart) return;
+        var css = getComputedStyle(document.documentElement);
+        var text = css.getPropertyValue('--color-text-muted').trim() || '#64748b';
+        var border = css.getPropertyValue('--color-border').trim() || '#e2e8f0';
+        Chart.defaults.color = text;
+        Chart.defaults.borderColor = border;
+        Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+        Chart.defaults.plugins.legend.labels.color = text;
+      })();
+    </script>
     {% block extra_head %}{% endblock %}
 </head>
 <body>

@@ -1,18 +1,18 @@
 {% extends 'dashboard/base_dashboard.html' %}
 {% load i18n %}
-{% block title %}Добавить учебник{% endblock %}
+{% block title %}{% trans "Добавить учебник" %}{% endblock %}
 {% block dashboard_content %}
-<div class="page-header"><h1><i data-lucide="plus-circle" style="width:2rem;height:2rem;vertical-align:middle;color:var(--color-primary);"></i> Добавить учебник</h1><a href="{% url 'dashboard:textbooks' %}" class="btn btn-outline"><i data-lucide="arrow-left" style="width:1.15rem;height:1.15rem;"></i> Назад</a></div>
+<div class="page-header"><h1><i data-lucide="plus-circle" class="icon-xl icon-primary"></i> {% trans "Добавить учебник" %}</h1><a href="{% url 'dashboard:textbooks' %}" class="btn btn-outline btn-sm"><i data-lucide="arrow-left" class="icon-sm"></i> {% trans "Назад" %}</a></div>
 <div class="card max-w-500">
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
-        <div class="mb-1"><label class="form-label">Название</label><input name="title" class="form-input" required></div>
-        <div class="mb-1"><label class="form-label">Предмет</label><input name="subject" class="form-input" required></div>
-        <div class="mb-1"><label class="form-label">Класс</label><input name="grade_number" type="number" min="1" max="11" class="form-input" required></div>
-        <div class="mb-1"><label class="form-label">Язык</label><select name="language" class="form-input"><option value="uz">Узбекский</option><option value="ru">Русский</option><option value="kaa">Каракалпакский</option><option value="en">Английский</option></select></div>
-        <div class="mb-1"><label class="form-label">Учебный год</label><input name="academic_year" class="form-input" placeholder="2025-2026"></div>
-        <div class="mb-1"><label class="form-label">Обложка</label><input name="cover" type="file" class="form-input" accept="image/*"></div>
-        <button class="btn btn-primary mt-1" type="submit">Создать</button>
+        <div class="mb-1"><label class="form-label">{% trans "Название" %}</label><input name="title" class="form-input" required></div>
+        <div class="mb-1"><label class="form-label">{% trans "Предмет" %}</label><input name="subject" class="form-input" required></div>
+        <div class="mb-1"><label class="form-label">{% trans "Класс" %}</label><input name="grade_number" type="number" min="1" max="11" class="form-input" required></div>
+        <div class="mb-1"><label class="form-label">{% trans "Язык" %}</label><select name="language" class="form-input"><option value="uz">{% trans "Узбекский" %}</option><option value="ru">{% trans "Русский" %}</option><option value="kaa">{% trans "Каракалпакский" %}</option><option value="en">{% trans "Английский" %}</option></select></div>
+        <div class="mb-1"><label class="form-label">{% trans "Учебный год" %}</label><input name="academic_year" class="form-input" placeholder="2025-2026"></div>
+        <div class="mb-1"><label class="form-label">{% trans "Обложка" %}</label><input name="cover" type="file" class="form-input" accept="image/*"></div>
+        <button class="btn btn-primary mt-1" type="submit">{% trans "Создать" %}</button>
     </form>
 </div>
 {% endblock %}

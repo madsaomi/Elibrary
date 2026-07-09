@@ -4,7 +4,7 @@
 {% block dashboard_content %}
 <div class="fade-in-up">
 <div class="page-header">
-    <h1 class="mb-05"><i data-lucide="user" style="width:2rem;height:2rem;vertical-align:middle;color:var(--color-primary);"></i> {{ student.last_name }} {{ student.first_name }}</h1>
+    <h1 class="mb-05"><i data-lucide="user" class="icon-xl icon-primary"></i> {{ student.last_name }} {{ student.first_name }}</h1>
 </div>
 <p class="text-muted mb-3" style="font-size: 0.95rem;">
     <span class="badge badge-info">{{ student.get_role_display }}</span> · <strong>{{ student.school.name }}</strong>
@@ -29,7 +29,7 @@
     {% endif %}
 </div>
 
-<h2 class="mb-2"><i data-lucide="book-open" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Выдачи учебников" %}</h2>
+<h2 class="mb-2"><i data-lucide="book-open" class="icon-inline"></i> {% trans "Выдачи учебников" %}</h2>
 <div class="table-wrap mb-4">
     <table>
         <thead><tr><th>{% trans "Учебник" %}</th><th>{% trans "Статус" %}</th><th>{% trans "Выдан" %}</th><th>{% trans "Срок" %}</th></tr></thead>
@@ -48,7 +48,7 @@
     </table>
 </div>
 
-<h2 class="mb-2"><i data-lucide="book-marked" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Выдачи книг" %}</h2>
+<h2 class="mb-2"><i data-lucide="book-marked" class="icon-inline"></i> {% trans "Выдачи книг" %}</h2>
 <div class="table-wrap mb-4">
     <table>
         <thead><tr><th>{% trans "Книга" %}</th><th>{% trans "Статус" %}</th><th>{% trans "Выдана" %}</th></tr></thead>
@@ -80,9 +80,9 @@
 {% endif %}
 
 <div class="flex gap-md mt-4">
-    <a href="{% url 'dashboard:reset_password' student.id %}" class="btn btn-danger"><i data-lucide="key" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Сбросить пароль" %}</a>
-    <a href="{% url 'dashboard:return_textbooks' student.id %}" class="btn btn-accent"><i data-lucide="inbox" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Принять учебники" %}</a>
-    <a href="{% url 'dashboard:issue_textbooks_set' student.id %}" class="btn btn-primary"><i data-lucide="send" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Выдать учебники" %}</a>
+    <a href="{% url 'dashboard:reset_password' student.id %}" class="btn btn-danger"><i data-lucide="key" class="icon-inline"></i> {% trans "Сбросить пароль" %}</a>
+    <a href="{% url 'dashboard:return_textbooks' student.id %}" class="btn btn-accent"><i data-lucide="inbox" class="icon-inline"></i> {% trans "Принять учебники" %}</a>
+    <a href="{% url 'dashboard:issue_textbooks_set' student.id %}" class="btn btn-primary"><i data-lucide="send" class="icon-inline"></i> {% trans "Выдать учебники" %}</a>
 </div>
 </div>
 {% endblock %}

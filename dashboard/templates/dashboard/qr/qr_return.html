@@ -5,7 +5,7 @@
 {% block dashboard_content %}
 <div class="qr-fullscreen" id="qrContainer">
     <div class="qr-fullscreen-inner">
-        <h1 class="qr-title"><i data-lucide="smartphone" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "QR-код для возврата" %}</h1>
+        <h1 class="qr-title"><i data-lucide="smartphone" class="icon-inline"></i> {% trans "QR-код для возврата" %}</h1>
         <p class="qr-count">{% blocktranslate %}Выбранных позиций: <strong>{{ count }}</strong>{% endblocktranslate %}</p>
         <p class="qr-count">{% blocktranslate %}После возврата останется: <strong>{{ remaining }}</strong>{% endblocktranslate %}</p>
         <div id="qrCode" class="qr-code-wrap"></div>

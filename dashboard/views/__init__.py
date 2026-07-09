@@ -5,7 +5,9 @@ from django.http import HttpResponse
 from django.views.decorators.http import require_POST
 from django.db.models import Q, Count, Avg
 from django.contrib.sessions.models import Session
+from django.core.paginator import Paginator
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from datetime import date
 
 from apps.accounts.models import User
@@ -17,7 +19,7 @@ from apps.loans.services import (
     issue_books, return_books, get_student_textbook_set,
     issue_textbooks_to_class, create_return_token, process_qr_return,
 )
-from apps.schools.models import Class
+from apps.schools.models import Class  # noqa: F401 (used in users_list grouping)
 from apps.gamification.models import UserLevel, Challenge, ChallengeAttempt
 from apps.gamification.services import award_freeze_days
 from apps.notifications.models import News
@@ -76,11 +78,11 @@ def profile(request):
 @login_required
 @require_POST
 def award_freeze_view(request, user_id):
-    if request.user.role not in ('school_admin',):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+    if request.user.role not in ('school_admin', 'superadmin'):
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     target = User.objects.get(id=user_id)
     if target.school != request.user.school:
-        return render(request, 'dashboard/error.html', {'error': 'Пользователь из другой школы'})
+        return render(request, 'dashboard/error.html', {'error': _('Пользователь из другой школы')})
     days = int(request.POST.get('days', 1))
     award_freeze_days(target, days)
     return redirect('dashboard:profile')
@@ -89,20 +91,82 @@ def award_freeze_view(request, user_id):
 @login_required
 def users_list(request):
     if request.user.role not in ('superadmin', 'school_admin'):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
-    users = User.objects.all()
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
+
+    base = User.objects.select_related('grade', 'school').all()
     if request.user.role == 'school_admin':
-        users = users.filter(school=request.user.school)
-    return render(request, 'dashboard/users/list.html', {'users': users})
+        base = base.filter(school=request.user.school)
+
+    q = request.GET.get('q', '').strip()
+    role_filter = request.GET.get('role', '').strip()
+    grade_filter = request.GET.get('grade', '').strip()
+    sort = request.GET.get('sort', 'name')
+
+    if q:
+        base = base.filter(Q(login__icontains=q) | Q(first_name__icontains=q) | Q(last_name__icontains=q))
+    if role_filter:
+        base = base.filter(role=role_filter)
+    if grade_filter:
+        base = base.filter(grade__number=grade_filter)
+
+    if sort == 'name':
+        base = base.order_by('last_name', 'first_name')
+    elif sort == 'login':
+        base = base.order_by('login')
+    elif sort == 'role':
+        base = base.order_by('role', 'last_name')
+    else:
+        base = base.order_by('last_name', 'first_name')
+
+    # Статистика
+    stats = base.aggregate(
+        total=Count('id'),
+        students=Count('id', filter=Q(role='student')),
+        teachers=Count('id', filter=Q(role='teacher')),
+        admins=Count('id', filter=Q(role__in=['school_admin', 'superadmin'])),
+        active=Count('id', filter=Q(is_active=True)),
+    )
+
+    classes = (
+        Class.objects.filter(school=request.user.school if request.user.role == 'school_admin' else None)
+        .order_by('number', 'parallel')
+    ) if request.user.role == 'school_admin' else (
+        Class.objects.filter(school__in=base.values('school')).distinct().order_by('number', 'parallel')
+    )
+
+    # Группировка учеников по классам
+    students_by_class = {}
+    student_qs = base.filter(role='student').select_related('grade', 'school')
+    for s in student_qs:
+        key = f"{s.grade.number}{s.grade.parallel}" if s.grade else "—"
+        students_by_class.setdefault(key, []).append(s)
+
+    others = base.exclude(role='student').select_related('school')
+
+    paginator = Paginator(base, 50)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'dashboard/users/list.html', {
+        'users': page_obj,
+        'stats': stats,
+        'classes': classes,
+        'students_by_class': dict(sorted(students_by_class.items())),
+        'others': others,
+        'q': q,
+        'role_filter': role_filter,
+        'grade_filter': grade_filter,
+        'sort': sort,
+    })
 
 
 @login_required
 def reset_password_view(request, user_id):
     if request.user.role not in ('superadmin', 'school_admin'):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     target = User.objects.get(id=user_id)
     if request.user.role == 'school_admin' and target.school != request.user.school:
-        return render(request, 'dashboard/error.html', {'error': 'Пользователь из другой школы'})
+        return render(request, 'dashboard/error.html', {'error': _('Пользователь из другой школы')})
     if request.method == 'POST':
         new_password = reset_password(target)
         Session.objects.filter(user=target).delete()
@@ -131,7 +195,7 @@ def textbooks_list(request):
 @login_required
 def textbook_create(request):
     if request.user.role not in ('school_admin', 'superadmin'):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     if request.method == 'POST':
         title = request.POST.get('title', '').strip()
         subject = request.POST.get('subject', '').strip()
@@ -150,8 +214,8 @@ def textbook_create(request):
 
 @login_required
 def textbook_stock_view(request):
-    if request.user.role not in ('school_admin',):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+    if request.user.role not in ('school_admin', 'superadmin'):
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     school = request.user.school
     stocks = TextbookStock.objects.filter(school=school).select_related('textbook')
     if request.method == 'POST':
@@ -182,8 +246,8 @@ def books_list(request):
 
 @login_required
 def book_create(request):
-    if request.user.role not in ('school_admin',):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+    if request.user.role not in ('school_admin', 'superadmin'):
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     school = request.user.school
     if request.method == 'POST':
         title = request.POST.get('title', '').strip()
@@ -204,8 +268,8 @@ def book_create(request):
 
 @login_required
 def bulk_issue_to_class(request):
-    if request.user.role not in ('school_admin',):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+    if request.user.role not in ('school_admin', 'superadmin'):
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     classes = Class.objects.filter(school=request.user.school, status=Class.Status.ACTIVE)
     if request.method == 'POST':
         class_id = request.POST.get('class_id')
@@ -223,9 +287,9 @@ def bulk_issue_to_class(request):
 @login_required
 def export_students(request):
     if request.user.role not in ('superadmin', 'school_admin'):
-        return HttpResponse('Доступ запрещён', status=403)
+        return HttpResponse(_('Доступ запрещён'), status=403)
     school = request.user.school
-    users = User.objects.filter(school=school, role=User.Role.STUDENT)
+    users = User.objects.filter(school=school, role=User.Role.STUDENT).select_related('grade')
     rows = [[f'{u.last_name} {u.first_name}', str(u.grade) if u.grade else '', u.login] for u in users]
     return export_to_excel(
         headers=['ФИО', 'Класс', 'Логин'],
@@ -236,8 +300,8 @@ def export_students(request):
 
 @login_required
 def qr_scanner(request):
-    if request.user.role not in ('school_admin',):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+    if request.user.role not in ('school_admin', 'superadmin'):
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     return render(request, 'dashboard/qr/scanner.html')
 
 
@@ -250,9 +314,12 @@ def cart(request):
 
 @login_required
 def issue_textbooks_view(request):
-    if request.user.role not in ('school_admin',):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
-    students = User.objects.filter(school=request.user.school, role=User.Role.STUDENT)
+    if request.user.role not in ('school_admin', 'superadmin'):
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
+    student_id = request.GET.get('student_id')
+    if student_id:
+        return redirect('dashboard:issue_textbooks_set', student_id=student_id)
+    students = User.objects.filter(school=request.user.school, role=User.Role.STUDENT).select_related('grade')
     if request.method == 'POST':
         student_id = request.POST.get('student_id')
         textbook_ids = request.POST.getlist('textbook_ids')
@@ -270,15 +337,91 @@ def issue_textbooks_view(request):
 
 
 @login_required
+def class_add_student(request, class_id):
+    if request.user.role not in ('superadmin', 'school_admin'):
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
+    cls = Class.objects.select_related('school').get(id=class_id)
+    school = cls.school
+    if request.user.role == 'school_admin' and request.user.school != school:
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
+    if request.method == 'POST':
+        from django.contrib import messages
+        login_val = request.POST.get('login', '').strip()
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        if login_val:
+            user = User.objects.filter(login=login_val).first()
+            if user:
+                user.grade = cls
+                user.school = school
+                user.save(update_fields=['grade', 'school'])
+                messages.success(request, f'{user.get_full_name()} добавлен(а) в {cls.number}{cls.parallel}')
+        elif first_name and last_name:
+            user = User.objects.create(
+                login=f'{first_name.lower()}.{last_name.lower()}_{cls.number}{cls.parallel}',
+                first_name=first_name, last_name=last_name,
+                role='student', grade=cls, school=school,
+            )
+            messages.success(request, f'{user.get_full_name()} создан(а) и добавлен(а) в {cls.number}{cls.parallel}')
+        else:
+            messages.error(request, _('Укажите логин существующего ученика или имя+фамилию нового'))
+    return redirect('dashboard:manage_classes')
+
+
+@login_required
+def class_remove_student(request, class_id):
+    if request.user.role not in ('superadmin', 'school_admin'):
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
+    cls = Class.objects.select_related('school').get(id=class_id)
+    if request.user.role == 'school_admin' and request.user.school != cls.school:
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
+    if request.method == 'POST':
+        from django.contrib import messages
+        student_id = request.POST.get('student_id')
+        user = User.objects.filter(id=student_id, grade=cls, role='student').first()
+        if user:
+            user.grade = None
+            user.save(update_fields=['grade'])
+            messages.info(request, f'{user.get_full_name()} удалён(а) из {cls.number}{cls.parallel}')
+        else:
+            messages.error(request, _('Ученик не найден в этом классе'))
+    return redirect('dashboard:manage_classes')
+
+
+@login_required
+def class_transfer_student(request, class_id):
+    if request.user.role not in ('superadmin', 'school_admin'):
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
+    from_cls = Class.objects.select_related('school').get(id=class_id)
+    if request.user.role == 'school_admin' and request.user.school != from_cls.school:
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
+    if request.method == 'POST':
+        from django.contrib import messages
+        student_id = request.POST.get('student_id')
+        to_class_id = request.POST.get('to_class_id')
+        user = User.objects.filter(id=student_id, grade=from_cls, role='student', school=from_cls.school).first()
+        to_cls = Class.objects.filter(id=to_class_id, school=from_cls.school).first()
+        if user and to_cls:
+            user.grade = to_cls
+            user.save(update_fields=['grade'])
+            messages.success(request,
+                f'{user.get_full_name()} переведён(а) из {from_cls.number}{from_cls.parallel} в {to_cls.number}{to_cls.parallel}')
+        else:
+            messages.error(request, _('Ошибка перевода: ученик или целевой класс не найден'))
+    return redirect('dashboard:manage_classes')
+
+
+@login_required
 def issue_textbooks_set_view(request, student_id):
-    if request.user.role not in ('school_admin',):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
-    student = User.objects.get(id=student_id)
+    if request.user.role not in ('school_admin', 'superadmin'):
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
+    from django.shortcuts import get_object_or_404
+    student = get_object_or_404(User, id=student_id)
     textbook_set = get_student_textbook_set(student)
     if request.method == 'POST':
         textbook_ids = request.POST.getlist('textbook_ids')
         loans = issue_textbooks(request.user.school, student, textbook_ids, request.user, 'student')
-        return redirect('dashboard:issue_textbooks_set_view', kwargs={'student_id': student_id})
+        return redirect('dashboard:issue_textbooks_set', student_id=student_id)
     else:
         return render(request, 'dashboard/loans/issue_set.html', {
             'student': student,
@@ -288,10 +431,10 @@ def issue_textbooks_set_view(request, student_id):
 
 @login_required
 def return_textbooks_view(request, student_id):
-    if request.user.role not in ('school_admin',):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+    if request.user.role not in ('school_admin', 'superadmin'):
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     student = User.objects.get(id=student_id)
-    active_loans = TextbookLoan.objects.filter(student=student, status=TextbookLoan.Status.ACTIVE)
+    active_loans = TextbookLoan.objects.filter(student=student, status=TextbookLoan.Status.ACTIVE).select_related('textbook')
     if request.method == 'POST':
         loan_ids = request.POST.getlist('loan_ids')
         forced = request.POST.get('forced') == '1'
@@ -310,8 +453,8 @@ def return_textbooks_view(request, student_id):
 
 @login_required
 def teacher_borrow_textbook(request):
-    if request.user.role not in ('teacher', 'school_admin'):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+    if request.user.role not in ('teacher', 'school_admin', 'superadmin'):
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     user = request.user
     textbooks = Textbook.objects.all()
     show_all = request.GET.get('show_all') == '1' or request.POST.get('show_all') == '1'
@@ -335,7 +478,7 @@ def teacher_borrow_textbook(request):
 
 @login_required
 def qr_return_view(request):
-    book_loans = RegularBookLoan.objects.filter(user=request.user, status=RegularBookLoan.Status.ACTIVE)
+    book_loans = RegularBookLoan.objects.filter(user=request.user, status=RegularBookLoan.Status.ACTIVE).select_related('book')
     if request.method == 'POST':
         loan_ids = request.POST.getlist('loan_ids')
         token = create_issue_token(request.user.school_id, str(request.user.id), loan_ids, 'book')
@@ -350,8 +493,8 @@ def qr_return_view(request):
 
 @login_required
 def activate_grade_5_view(request):
-    if request.user.role not in ('school_admin',):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+    if request.user.role not in ('school_admin', 'superadmin'):
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     if request.method == 'POST':
         grade_number = int(request.POST.get('grade_number', 5))
         academic_year = request.POST.get('academic_year', '')
@@ -368,11 +511,11 @@ def activate_grade_5_view(request):
 @login_required
 def inventory(request):
     if request.user.role not in ('school_admin', 'superadmin'):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     stats = get_school_stats(request.user.school) if request.user.school else {}
     overdue_loans = TextbookLoan.objects.filter(
         Q(status=TextbookLoan.Status.ACTIVE) & Q(due_date__lt=date.today()),
-    )
+    ).select_related('student', 'textbook')
     if request.user.role == 'school_admin':
         overdue_loans = overdue_loans.filter(school=request.user.school)
     return render(request, 'dashboard/stats/inventory.html', {
@@ -384,9 +527,9 @@ def inventory(request):
 @login_required
 def superadmin_dashboard(request):
     if request.user.role != 'superadmin':
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     districts = District.objects.annotate(school_count=Count('schools'))
-    schools = School.objects.annotate(
+    schools = School.objects.select_related('district').annotate(
         student_count=Count('user', filter=Q(user__role=User.Role.STUDENT)),
     ).order_by('name')
     total_students = User.objects.filter(role=User.Role.STUDENT).count()
@@ -404,8 +547,8 @@ def superadmin_dashboard(request):
 
 @login_required
 def challenge_moderation(request):
-    if request.user.role not in ('school_admin',):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+    if request.user.role not in ('school_admin', 'superadmin'):
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     pending = Challenge.objects.filter(status=Challenge.Status.DRAFT)
     if request.user.role == 'school_admin':
         pending = pending.filter(Q(school=request.user.school) | Q(school__isnull=True))
@@ -416,9 +559,9 @@ def challenge_moderation(request):
 def textbook_qr_return_view(request):
     user = request.user
     if request.user.role == 'student':
-        textbook_loans = TextbookLoan.objects.filter(student=user, status=TextbookLoan.Status.ACTIVE)
-    elif request.user.role in ('teacher', 'school_admin'):
-        textbook_loans = TextbookLoan.objects.filter(student=user, status=TextbookLoan.Status.ACTIVE, borrower_type='teacher')
+        textbook_loans = TextbookLoan.objects.filter(student=user, status=TextbookLoan.Status.ACTIVE).select_related('textbook')
+    elif request.user.role in ('teacher', 'school_admin', 'superadmin'):
+        textbook_loans = TextbookLoan.objects.filter(student=user, status=TextbookLoan.Status.ACTIVE, borrower_type='teacher').select_related('textbook')
     else:
         textbook_loans = []
     if request.method == 'POST':
@@ -435,20 +578,38 @@ def textbook_qr_return_view(request):
 
 @login_required
 def return_list_export(request):
-    if request.user.role not in ('school_admin',):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+    if request.user.role not in ('school_admin', 'superadmin'):
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     school = request.user.school
     students = User.objects.filter(school=school, role=User.Role.STUDENT, grade__isnull=False).select_related('grade')
     debtors_only = request.GET.get('debtors') == '1'
     students_data = []
+    assignments_by_class = {}
+    all_student_ids = [s.id for s in students]
+    all_textbook_ids = set()
     for student in students:
-        assignments = SubjectTextbook.objects.filter(school_class=student.grade).select_related('textbook')
+        cls = student.grade
+        if cls.id not in assignments_by_class:
+            assignments_by_class[cls.id] = list(
+                SubjectTextbook.objects.filter(school_class=cls).select_related('textbook')
+            )
+        all_textbook_ids.update(a.textbook_id for a in assignments_by_class[cls.id])
+    loans_by_key = {}
+    all_loans = TextbookLoan.objects.filter(
+        student_id__in=all_student_ids,
+        textbook_id__in=all_textbook_ids,
+    ).select_related('textbook').order_by('-created_at')
+    for loan in all_loans:
+        key = (loan.student_id, loan.textbook_id)
+        if key not in loans_by_key:
+            loans_by_key[key] = loan
+    for student in students:
+        cls = student.grade
+        assignments = assignments_by_class[cls.id]
         subjects = []
         all_returned = True
         for assignment in assignments:
-            loan = TextbookLoan.objects.filter(
-                student=student, textbook=assignment.textbook,
-            ).order_by('-created_at').first()
+            loan = loans_by_key.get((student.id, assignment.textbook_id))
             status = 'returned' if (not loan or loan.status == TextbookLoan.Status.RETURNED) else 'active'
             if status == 'active':
                 all_returned = False
@@ -466,8 +627,8 @@ def return_list_export(request):
 
 @login_required
 def teacher_books_view(request):
-    if request.user.role not in ('teacher', 'school_admin'):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+    if request.user.role not in ('teacher', 'school_admin', 'superadmin'):
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     user = request.user
     books = RegularBook.objects.filter(school=user.school)
     if request.method == 'POST':
@@ -487,8 +648,8 @@ def teacher_books_view(request):
 
 @login_required
 def challenge_moderation_detail(request, challenge_id):
-    if request.user.role not in ('school_admin',):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+    if request.user.role not in ('school_admin', 'superadmin'):
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     challenge = Challenge.objects.get(id=challenge_id)
     if request.method == 'POST':
         import json as _json
@@ -507,8 +668,8 @@ def challenge_moderation_detail(request, challenge_id):
 
 @login_required
 def import_teachers_csv(request):
-    if request.user.role not in ('school_admin',):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+    if request.user.role not in ('school_admin', 'superadmin'):
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     if request.method == 'POST':
         import csv, io
         csv_file = request.FILES.get('csv_file')
@@ -541,7 +702,7 @@ def import_teachers_csv(request):
 @login_required
 def manage_districts(request):
     if request.user.role != 'superadmin':
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
         if name:
@@ -554,7 +715,7 @@ def manage_districts(request):
 @login_required
 def manage_schools(request):
     if request.user.role != 'superadmin':
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     districts = District.objects.all()
     error = None
     if request.method == 'POST':
@@ -589,7 +750,7 @@ def manage_schools(request):
 @login_required
 def manage_classes(request):
     if request.user.role not in ('superadmin', 'school_admin'):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     school = request.user.school if request.user.role == 'school_admin' else None
     schools = School.objects.all() if request.user.role == 'superadmin' else []
     if request.method == 'POST':
@@ -607,15 +768,62 @@ def manage_classes(request):
     classes = Class.objects.select_related('school')
     if school:
         classes = classes.filter(school=school)
+
+    # Группировка учеников по классам
+    students_by_class = {}
+    if school:
+        students_qs = User.objects.filter(school=school, role='student').select_related('grade').only('id', 'first_name', 'last_name', 'login', 'grade')
+    else:
+        students_qs = User.objects.filter(role='student').select_related('grade', 'school').only('id', 'first_name', 'last_name', 'login', 'grade', 'school')
+
+    for s in students_qs:
+        if s.grade_id:
+            students_by_class.setdefault(str(s.grade_id), []).append(s)
+
+    # Данные для вкладки "Переводы"
+    from apps.schools.models import TransferLog, PromotionLog
+    outgoing = incoming = completed = []
+    young_students = []
+    current_year = next_year = ''
+    promotions = []
+
+    if school:
+        # переводы
+        outgoing = TransferLog.objects.filter(from_school=school).exclude(
+            status=TransferLog.Status.COMPLETED
+        ).select_related('user')
+        incoming = TransferLog.objects.filter(
+            status=TransferLog.Status.PENDING
+        ).exclude(from_school=school).select_related('user', 'from_school')
+        completed = TransferLog.objects.filter(
+            Q(from_school=school) | Q(to_school=school),
+            status=TransferLog.Status.COMPLETED,
+        ).select_related('user', 'from_school', 'to_school').order_by('-completed_at')[:20]
+        # продвижение
+        promotions = PromotionLog.objects.filter(school=school).order_by('-created_at')[:10]
+        current_year = str(timezone.now().year - 1) + '-' + str(timezone.now().year)
+        next_year = str(timezone.now().year) + '-' + str(timezone.now().year + 1)
+        # младшие классы
+        young_classes = Class.objects.filter(school=school, number__lte=4, status=Class.Status.ACTIVE)
+        young_students = User.objects.filter(
+            school=school, role=User.Role.STUDENT,
+            grade__in=young_classes, is_active_for_gamification=False,
+        ).select_related('grade')
+
     return render(request, 'dashboard/schools/classes.html', {
         'classes': classes, 'schools': schools, 'school': school,
+        'students_by_class': students_by_class,
+        'outgoing': outgoing, 'incoming': incoming, 'completed': completed,
+        'promotions': promotions, 'current_year': current_year, 'next_year': next_year,
+        'young_students': young_students,
     })
+
 
 
 @login_required
 def manage_subject_textbooks(request):
-    if request.user.role not in ('school_admin',):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+    if request.user.role not in ('school_admin', 'superadmin'):
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     school = request.user.school
     classes_qs = Class.objects.filter(school=school)
     if request.method == 'POST':
@@ -635,10 +843,10 @@ def manage_subject_textbooks(request):
 @login_required
 def student_detail(request, student_id):
     if request.user.role not in ('superadmin', 'school_admin'):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     student = User.objects.get(id=student_id)
     if request.user.role == 'school_admin' and student.school != request.user.school:
-        return render(request, 'dashboard/error.html', {'error': 'Пользователь из другой школы'})
+        return render(request, 'dashboard/error.html', {'error': _('Пользователь из другой школы')})
     textbook_loans = TextbookLoan.objects.filter(student=student).select_related('textbook')
     book_loans = RegularBookLoan.objects.filter(user=student).select_related('book')
     achievements = student.achievements.select_related('achievement').all()
@@ -653,8 +861,8 @@ def student_detail(request, student_id):
 
 @login_required
 def manage_young_students(request):
-    if request.user.role not in ('school_admin',):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+    if request.user.role not in ('school_admin', 'superadmin'):
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     classes = Class.objects.filter(school=request.user.school, number__lte=4, status=Class.Status.ACTIVE)
     students = User.objects.filter(school=request.user.school, role=User.Role.STUDENT, grade__in=classes, is_active_for_gamification=False)
     if request.method == 'POST':
@@ -668,16 +876,14 @@ def manage_young_students(request):
                 role=User.Role.STUDENT, school=request.user.school,
                 grade=grade, is_active_for_gamification=False,
             )
-        return redirect('dashboard:manage_young_students')
-    return render(request, 'dashboard/users/young_students.html', {
-        'students': students, 'classes': classes,
-    })
+        return redirect('dashboard:manage_classes')
+    return redirect('dashboard:manage_classes')
 
 
 @login_required
 def multi_class_teacher_borrow(request):
-    if request.user.role not in ('teacher', 'school_admin'):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+    if request.user.role not in ('teacher', 'school_admin', 'superadmin'):
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     user = request.user
     classes = Class.objects.filter(school=user.school, status=Class.Status.ACTIVE)
     textbooks = Textbook.objects.all()
@@ -756,7 +962,7 @@ def student_challenge(request):
         status=Challenge.Status.PUBLISHED,
     ).order_by('-week_start').first()
     if active:
-        return redirect('student_challenge')
+        return redirect('dashboard:student_challenge')
     return redirect('dashboard:challenge_leaderboard')
 
 
@@ -808,8 +1014,8 @@ def student_catalog(request):
 
 @login_required
 def my_loans(request):
-    textbook_loans = TextbookLoan.objects.filter(student=request.user)
-    book_loans = RegularBookLoan.objects.filter(user=request.user)
+    textbook_loans = TextbookLoan.objects.filter(student=request.user).select_related('textbook')
+    book_loans = RegularBookLoan.objects.filter(user=request.user).select_related('book')
     return render(request, 'dashboard/loans/my_loans.html', {
         'textbook_loans': textbook_loans,
         'book_loans': book_loans,
@@ -825,7 +1031,7 @@ def news_list(request):
 @login_required
 def news_create(request):
     if request.user.role not in ('superadmin', 'school_admin'):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     if request.method == 'POST':
         title = request.POST.get('title', '').strip()
         content = request.POST.get('content', '').strip()
@@ -875,7 +1081,7 @@ def cart_counter_fragment(request):
 @login_required
 def student_textbook_cart(request):
     if request.user.role not in ('student', 'teacher', 'school_admin'):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     user = request.user
     cart_ids = request.session.get(CART_SESSION_KEY, [])
     textbooks = Textbook.objects.filter(id__in=cart_ids) if cart_ids else Textbook.objects.none()
@@ -997,7 +1203,7 @@ def qr_return_loans(request):
 @login_required
 def homeroom_dashboard(request):
     if request.user.role != 'teacher':
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     from django.db.models import Count, Q
     classes = list(request.user.homeroom_classes.filter(status=Class.Status.ACTIVE))
     students = User.objects.filter(grade__in=classes, role=User.Role.STUDENT).annotate(
@@ -1009,8 +1215,8 @@ def homeroom_dashboard(request):
 
 @login_required
 def import_csv_view(request):
-    if request.user.role not in ('school_admin',):
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+    if request.user.role not in ('school_admin', 'superadmin'):
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     if request.method == 'POST':
         import csv, io
         csv_file = request.FILES.get('csv_file')
@@ -1059,108 +1265,84 @@ def import_csv_view(request):
 
 @login_required
 def school_settings(request):
-    if request.user.role not in ('school_admin',):
-        return render(request, 'dashboard/error.html', {'error': 'Access denied'})
-    from apps.schools.models import PromotionLog
-    school = request.user.school
-    promotions = PromotionLog.objects.filter(school=school).order_by('-created_at')[:10]
-    current_year = str(timezone.now().year - 1) + '-' + str(timezone.now().year)
-    next_year = str(timezone.now().year) + '-' + str(timezone.now().year + 1)
-    return render(request, 'dashboard/schools/settings.html', {
-        'school': school,
-        'promotions': promotions,
-        'current_year': current_year,
-        'next_year': next_year,
-    })
+    return redirect('dashboard:manage_classes')
 
 
 @login_required
 @require_POST
 def promote_classes_view(request):
-    if request.user.role not in ('school_admin',):
-        return render(request, 'dashboard/error.html', {'error': 'Access denied'})
+    if request.user.role not in ('school_admin', 'superadmin'):
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     from apps.schools.services import auto_promote_classes
     school = request.user.school
     current_year = request.POST.get('current_year', '').strip()
     next_year = request.POST.get('next_year', '').strip()
     if not current_year or not next_year:
-        return redirect('dashboard:school_settings')
+        return redirect('dashboard:manage_classes')
     try:
         promoted = auto_promote_classes(school, current_year, next_year, initiated_by=request.user)
-        return redirect('dashboard:school_settings')
+        from django.contrib import messages
+        messages.success(request, _('Классы успешно переведены на следующий год'))
+        return redirect('dashboard:manage_classes')
     except ValueError as e:
-        from apps.schools.models import PromotionLog
-        promotions = PromotionLog.objects.filter(school=school).order_by('-created_at')[:10]
-        return render(request, 'dashboard/schools/settings.html', {
-            'school': school,
-            'promotions': promotions,
-            'current_year': current_year,
-            'next_year': next_year,
-            'error': str(e),
-        })
+        from django.contrib import messages
+        messages.error(request, str(e))
+        return redirect('dashboard:manage_classes')
 
 
 @login_required
 def transfers_list(request):
-    if request.user.role not in ('school_admin',):
-        return render(request, 'dashboard/error.html', {'error': 'Access denied'})
-    from apps.schools.models import TransferLog
-    school = request.user.school
-    outgoing = TransferLog.objects.filter(from_school=school).exclude(
-        status=TransferLog.Status.COMPLETED
-    ).select_related('user')
-    incoming = TransferLog.objects.filter(
-        status=TransferLog.Status.PENDING
-    ).exclude(from_school=school).select_related('user', 'from_school')
-    completed = TransferLog.objects.filter(
-        Q(from_school=school) | Q(to_school=school),
-        status=TransferLog.Status.COMPLETED,
-    ).select_related('user', 'from_school', 'to_school').order_by('-completed_at')[:20]
-    return render(request, 'dashboard/schools/transfers.html', {
-        'outgoing': outgoing,
-        'incoming': incoming,
-        'completed': completed,
-    })
+    return redirect('dashboard:manage_classes')
 
 
 @login_required
 @require_POST
 def transfer_depart(request):
-    if request.user.role not in ('school_admin',):
-        return render(request, 'dashboard/error.html', {'error': 'Access denied'})
+    if request.user.role not in ('school_admin', 'superadmin'):
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
+    from django.contrib import messages
     from apps.schools.transfer_service import initiate_departure, complete_departure
     user_id = request.POST.get('user_id')
     action = request.POST.get('action', 'initiate')
     if action == 'initiate':
         target = User.objects.get(id=user_id)
         if target.school != request.user.school:
-            return render(request, 'dashboard/error.html', {'error': 'User not in your school'})
+            messages.error(request, _('Пользователь из другой школы'))
+            return redirect('dashboard:manage_classes')
         transfer, err = initiate_departure(target, request.user)
         if err:
-            return render(request, 'dashboard/error.html', {'error': err})
+            messages.error(request, err)
+            return redirect('dashboard:manage_classes')
+        messages.success(request, _('Уход оформлен'))
     elif action == 'complete':
         transfer, err = complete_departure(user_id, request.user)
         if err:
-            return render(request, 'dashboard/error.html', {'error': err})
-    return redirect('dashboard:transfers')
+            messages.error(request, err)
+            return redirect('dashboard:manage_classes')
+        messages.success(request, _('Уход подтверждён'))
+    return redirect('dashboard:manage_classes')
 
 
 @login_required
 @require_POST
 def transfer_accept(request):
-    if request.user.role not in ('school_admin',):
-        return render(request, 'dashboard/error.html', {'error': 'Access denied'})
+    if request.user.role not in ('school_admin', 'superadmin'):
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
+    from django.contrib import messages
     from apps.schools.transfer_service import accept_transfer
     user_login = request.POST.get('user_login', '').strip()
     if not user_login:
-        return redirect('dashboard:transfers')
+        return redirect('dashboard:manage_classes')
     target = User.objects.filter(login=user_login).first()
     if not target:
-        return render(request, 'dashboard/error.html', {'error': f'User "{user_login}" not found'})
+        messages.error(request, _('Пользователь не найден'))
+        return redirect('dashboard:manage_classes')
     transfer, err = accept_transfer(target.id, request.user.school, request.user)
     if err:
-        return render(request, 'dashboard/error.html', {'error': err})
-    return redirect('dashboard:transfers')
+        messages.error(request, err)
+        return redirect('dashboard:manage_classes')
+    messages.success(request, _('Ученик принят в школу'))
+    return redirect('dashboard:manage_classes')
 
 
 @login_required
@@ -1175,5 +1357,5 @@ def book_detail(request, book_id):
     from django.shortcuts import get_object_or_404
     book = get_object_or_404(RegularBook, id=book_id)
     if request.user.role != 'superadmin' and book.school != request.user.school:
-        return render(request, 'dashboard/error.html', {'error': 'Доступ запрещён'})
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     return render(request, 'dashboard/catalog/book_detail.html', {'book': book})

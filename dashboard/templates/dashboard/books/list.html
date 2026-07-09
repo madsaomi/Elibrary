@@ -2,30 +2,29 @@
 {% load i18n %}
 {% block title %}{% trans "Книги — Библиотечная система" %}{% endblock %}
 {% block dashboard_content %}
-<div class="page-header"><h1><i data-lucide="book-open" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Книги" %}</h1><a href="{% url 'dashboard:book_create' %}" class="btn btn-primary">+ {% trans "Добавить" %}</a></div>
+<div class="page-header"><h1><i data-lucide="book-open" class="icon-inline"></i> {% trans "Книги" %}</h1><a href="{% url 'dashboard:book_create' %}" class="btn btn-primary">+ {% trans "Добавить" %}</a></div>
 <form method="get" class="flex gap-sm mb-2">
     <input type="text" name="q" value="{{ q }}" placeholder="{% trans 'Поиск по названию или автору...' %}" class="form-input flex-1">
     <button class="btn btn-primary" type="submit">{% trans "Поиск" %}</button>
 </form>
-<div class="card overflow-x-auto">
-    <table>
-        <thead>
-            <tr><th></th><th>{% trans "Название" %}</th><th>{% trans "Автор" %}</th><th>{% trans "Категория" %}</th><th class="text-right">{% trans "Всего" %}</th><th class="text-right">{% trans "Доступно" %}</th></tr>
-        </thead>
-        <tbody>
-            {% for book in books %}
-            <tr>
-                <td>{% if book.cover %}<img src="{{ book.cover.url }}" alt="" class="cover-thumb">{% else %}<span class="cover-placeholder"><i data-lucide="book-open" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i></span>{% endif %}</td>
-                <td>{{ book.title }}</td>
-                <td>{{ book.author|default:'-' }}</td>
-                <td>{{ book.category.name|default:'-' }}</td>
-                <td class="text-right">{{ book.total_copies }}</td>
-                <td class="text-right">{{ book.available_copies }}</td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="6" class="text-center text-muted p-2">{% trans "Нет книг" %}</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<div class="item-grid">
+    {% for book in books %}
+    <a href="{% url 'dashboard:book_detail' book.id %}" class="item-card">
+        {% if book.cover %}<img loading="lazy" src="{{ book.cover.url }}" alt="{{ book.title }}" class="item-cover">{% else %}<div class="item-cover-ph"><i data-lucide="book-open"></i></div>{% endif %}
+        <div class="item-body">
+            <div class="item-title">{{ book.title }}</div>
+            <div class="item-sub">{{ book.author|default:'—' }}</div>
+            <div class="item-meta">
+                {% if book.category %}<span class="item-chip">{{ book.category.name }}</span>{% endif %}
+                <span class="item-chip {% if book.available_copies > 0 %}chip-ok{% else %}chip-low{% endif %}"><i data-lucide="layers" class="icon-2xs"></i> {{ book.available_copies }} / {{ book.total_copies }}</span>
+            </div>
+        </div>
+    </a>
+    {% empty %}
+    <div class="directory-empty" style="grid-column:1/-1;">
+        <i data-lucide="book-open" class="icon-3xl icon-faded"></i>
+        <p class="mt-1">{% trans "Нет книг" %}</p>
+    </div>
+    {% endfor %}
 </div>
 {% endblock %}

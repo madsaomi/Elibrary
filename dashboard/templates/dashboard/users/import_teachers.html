@@ -3,7 +3,7 @@
 {% block title %}{% trans "Импорт учителей" %}{% endblock %}
 {% block dashboard_content %}
 <div class="card max-w-500">
-    <h1 style="font-size: 1.25rem; margin-bottom: 1rem;"><i data-lucide="upload" style="width:1.5rem;height:1.5rem;vertical-align:middle;"></i> {% trans "Массовый импорт учителей" %}</h1>
+    <h1 style="font-size: 1.25rem; margin-bottom: 1rem;"><i data-lucide="upload" class="icon-lg"></i> {% trans "Массовый импорт учителей" %}</h1>
     <p class="text-muted mb-2">
         {% blocktranslate %}Загрузите CSV-файл с колонками: <strong>ФИО</strong>, <strong>Предмет</strong>{% endblocktranslate %}
     </p>
@@ -18,7 +18,7 @@
         <div class="mb-2">
             <input type="file" name="csv_file" accept=".csv" class="form-input" required>
         </div>
-        <button type="submit" class="btn btn-primary"><i data-lucide="upload-cloud" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Загрузить и импортировать" %}</button>
+        <button type="submit" class="btn btn-primary"><i data-lucide="upload-cloud" class="icon-inline"></i> {% trans "Загрузить и импортировать" %}</button>
     </form>
 </div>
 {% endblock %}

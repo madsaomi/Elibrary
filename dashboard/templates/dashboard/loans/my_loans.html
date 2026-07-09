@@ -4,11 +4,11 @@
 {% block dashboard_content %}
 <div class="fade-in-up">
 <div class="page-header">
-    <h1><i data-lucide="book-marked" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Мои выдачи" %}</h1>
+    <h1><i data-lucide="book-marked" class="icon-inline"></i> {% trans "Мои выдачи" %}</h1>
 </div>
 
 {% if textbook_loans %}
-<h2 class="mb-2"><i data-lucide="book" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Учебники" %}</h2>
+<h2 class="mb-2"><i data-lucide="book" class="icon-inline"></i> {% trans "Учебники" %}</h2>
 <form method="post" action="{% url 'dashboard:qr_return_loans' %}" class="table-wrap mb-4">
     {% csrf_token %}
     <input type="hidden" name="item_type" value="textbook">
@@ -31,7 +31,7 @@
         </tbody>
     </table>
     <div class="p-2 flex gap-sm items-center" style="display:none" data-actions>
-        <button class="btn btn-primary btn-sm"><i data-lucide="camera" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Вернуть выбранное" %}</button>
+        <button class="btn btn-primary btn-sm"><i data-lucide="camera" class="icon-inline"></i> {% trans "Вернуть выбранное" %}</button>
         <span class="text-muted text-sm" data-remaining></span>
     </div>
 </form>
@@ -59,7 +59,7 @@
         </tbody>
     </table>
     <div class="p-2 flex gap-sm items-center" style="display:none" data-actions>
-        <button class="btn btn-primary btn-sm"><i data-lucide="camera" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Вернуть выбранное" %}</button>
+        <button class="btn btn-primary btn-sm"><i data-lucide="camera" class="icon-inline"></i> {% trans "Вернуть выбранное" %}</button>
         <span class="text-muted text-sm" data-remaining></span>
     </div>
 </form>

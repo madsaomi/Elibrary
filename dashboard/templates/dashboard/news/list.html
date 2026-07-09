@@ -3,9 +3,9 @@
 {% block title %}{% trans "Новости" %}{% endblock %}
 {% block dashboard_content %}
 <div class="page-header">
-    <h1><i data-lucide="newspaper" style="width:2rem;height:2rem;vertical-align:middle;color:var(--color-primary);"></i> {% trans "Новости" %}</h1>
+    <h1><i data-lucide="newspaper" class="icon-xl icon-primary"></i> {% trans "Новости" %}</h1>
     {% if request.user.role == 'superadmin' or request.user.role == 'school_admin' %}
-    <a href="{% url 'dashboard:news_create' %}" class="btn btn-primary"><i data-lucide="plus" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Создать" %}</a>
+    <a href="{% url 'dashboard:news_create' %}" class="btn btn-primary"><i data-lucide="plus" class="icon-inline"></i> {% trans "Создать" %}</a>
     {% endif %}
 </div>
 <div class="flex flex-col gap-md">

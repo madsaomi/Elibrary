@@ -7,17 +7,17 @@
 {% if stats %}
 <div class="stats-grid mb-4">
     <div class="card-stat">
-        <div class="icon"><i data-lucide="library" style="width:2rem;height:2rem;"></i></div>
+        <div class="icon"><i data-lucide="library" class="icon-xl"></i></div>
         <div class="value" style="font-family: var(--font-display);">{{ stats.regular_books.total|default:0 }}</div>
         <div class="label">{% trans "Книг всего" %}</div>
     </div>
     <div class="card-stat">
-        <div class="icon"><i data-lucide="book-open" style="width:2rem;height:2rem;"></i></div>
+        <div class="icon"><i data-lucide="book-open" class="icon-xl"></i></div>
         <div class="value" style="font-family: var(--font-display);">{{ stats.textbook_stocks.total|default:0 }}</div>
         <div class="label">{% trans "Учебников всего" %}</div>
     </div>
     <div class="card-stat">
-        <div class="icon"><i data-lucide="graduation-cap" style="width:2rem;height:2rem;"></i></div>
+        <div class="icon"><i data-lucide="graduation-cap" class="icon-xl"></i></div>
         <div class="value" style="font-family: var(--font-display);">{{ stats.active_loans|default:0 }}</div>
         <div class="label">{% trans "Активных читателей" %}</div>
     </div>

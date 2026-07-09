@@ -14,31 +14,36 @@
     <div class="card p-3"><div class="skeleton skeleton-title" style="width:30%"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text" style="width:60%"></div></div>
 </div>
 <div class="fade-in-up">
-<h1 class="mb-05">{% blocktranslate %}Добро пожаловать, {{ user.first_name }}!{% endblocktranslate %}</h1>
-<p class="text-muted mb-3" style="font-size: 0.95rem;">
-    {% trans "Роль:" %} <span class="badge badge-info">{{ user.get_role_display }}</span>
-    {% if user.school %} · {{ user.school.name }}{% endif %}
-</p>
+<div class="welcome-bar">
+    <div>
+        <div class="wb-title">{% blocktranslate %}Добро пожаловать, {{ user.first_name }}!{% endblocktranslate %}</div>
+        <div class="wb-sub">
+            <span class="chip">{{ user.get_role_display }}</span>
+            {% if user.school %}<span><i data-lucide="school" class="icon-2xs"></i> {{ user.school.name }}</span>{% endif %}
+        </div>
+    </div>
+    <div class="wb-icon"><i data-lucide="layout-dashboard"></i></div>
+</div>
 
 {% if stats %}
 <div class="stats-grid mb-4">
     <div class="card-stat">
-        <div class="icon"><i data-lucide="graduation-cap" style="width:2rem;height:2rem;"></i></div>
+        <div class="icon"><i data-lucide="graduation-cap" class="icon-xl"></i></div>
         <div class="value">{{ stats.students }}</div>
         <div class="label">{% trans "Учеников" %}</div>
     </div>
     <div class="card-stat">
-        <div class="icon"><i data-lucide="user-check" style="width:2rem;height:2rem;"></i></div>
+        <div class="icon"><i data-lucide="user-check" class="icon-xl"></i></div>
         <div class="value">{{ stats.teachers }}</div>
         <div class="label">{% trans "Учителей" %}</div>
     </div>
     <div class="card-stat">
-        <div class="icon"><i data-lucide="book-open" style="width:2rem;height:2rem;"></i></div>
+        <div class="icon"><i data-lucide="book-open" class="icon-xl"></i></div>
         <div class="value">{{ stats.active_loans }}</div>
         <div class="label">{% trans "Активных выдач" %}</div>
     </div>
     <div class="card-stat">
-        <div class="icon"><i data-lucide="star" style="width:2rem;height:2rem;"></i></div>
+        <div class="icon"><i data-lucide="star" class="icon-xl"></i></div>
         <div class="value">{{ stats.avg_xp }}</div>
         <div class="label">{% trans "Средний XP" %}</div>
     </div>
@@ -46,7 +51,7 @@
 {% endif %}
 
 {% if leaderboard %}
-<h2 class="mb-2"><i data-lucide="trophy" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Лидерборд школы" %}</h2>
+<h2 class="mb-2"><i data-lucide="trophy" class="icon-inline"></i> {% trans "Лидерборд школы" %}</h2>
 <div class="table-wrap mb-4">
     <table>
         <thead>
@@ -55,7 +60,7 @@
         <tbody>
             {% for ul in leaderboard %}
             <tr class="{% if ul.user_id == user.id %}current-user-row{% endif %}">
-                <td>{{ forloop.counter }}</td>
+                <td><span class="rank-badge{% if forloop.counter <= 3 %} rank-{{ forloop.counter }}{% endif %}">{{ forloop.counter }}</span></td>
                 <td><strong>{{ ul.user.last_name }} {{ ul.user.first_name }}</strong></td>
                 <td>{{ ul.user.grade|default:'-' }}</td>
                 <td class="text-right"><strong>{{ ul.total_xp }}</strong></td>
@@ -77,7 +82,7 @@
 {% endif %}
 
 {% if news %}
-<h2 class="mb-2 mt-3"><i data-lucide="newspaper" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Новости" %}</h2>
+<h2 class="mb-2 mt-3"><i data-lucide="newspaper" class="icon-inline"></i> {% trans "Новости" %}</h2>
 <div class="flex flex-col gap-lg">
     {% for item in news %}
     <div class="card card-hover">

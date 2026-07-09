@@ -4,7 +4,7 @@
 {% block dashboard_content %}
 <div class="fade-in-up">
 <div class="page-header">
-    <h1><i data-lucide="book-open" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% blocktranslate %}Выдача учебников — {{ student.last_name }} {{ student.first_name }}{% endblocktranslate %}</h1>
+    <h1><i data-lucide="book-open" class="icon-inline"></i> {% blocktranslate %}Выдача учебников — {{ student.last_name }} {{ student.first_name }}{% endblocktranslate %}</h1>
     <button class="btn btn-accent" onclick="selectAllAvailable()">📗 {% trans "Выдать все доступные" %}</button>
 </div>
 <p class="text-muted mb-4" style="font-size: 0.95rem;">
@@ -24,13 +24,13 @@
                     <td><strong>{{ item.textbook.title }}</strong></td>
                     <td class="text-center">
                         {% if item.status == 'issued' %}
-                        <span class="badge badge-info"><i data-lucide="check" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Выдан" %} {{ item.issued_at|date:'d.m.Y' }}</span>
+                        <span class="badge badge-info"><i data-lucide="check" class="icon-inline"></i> {% trans "Выдан" %} {{ item.issued_at|date:'d.m.Y' }}</span>
                         {% elif item.status == 'overdue' %}
-                        <span class="badge badge-danger"><i data-lucide="alert-triangle" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Просрочено" %} {{ item.issued_at|date:'d.m.Y' }}</span>
+                        <span class="badge badge-danger"><i data-lucide="alert-triangle" class="icon-inline"></i> {% trans "Просрочено" %} {{ item.issued_at|date:'d.m.Y' }}</span>
                         {% elif item.status == 'available' %}
                         <span class="badge badge-success">📗 {% trans "В наличии" %}</span>
                         {% else %}
-                        <span class="badge badge-muted"><i data-lucide="x" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Нет в наличии" %}</span>
+                        <span class="badge badge-muted"><i data-lucide="x" class="icon-inline"></i> {% trans "Нет в наличии" %}</span>
                         {% endif %}
                     </td>
                     <td class="text-center">
@@ -47,7 +47,7 @@
             </tbody>
         </table>
     </div>
-    <button type="submit" class="btn btn-primary"><i data-lucide="log-out" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Выдать выбранные" %}</button>
+    <button type="submit" class="btn btn-primary"><i data-lucide="log-out" class="icon-inline"></i> {% trans "Выдать выбранные" %}</button>
 </form>
 </div>
 {% endblock %}

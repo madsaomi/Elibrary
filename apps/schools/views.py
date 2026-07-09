@@ -1,6 +1,7 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.utils.translation import gettext as _
 
 from apps.schools.models import District, School, Class, TransferLog
 from apps.schools.serializers import (
@@ -64,7 +65,7 @@ class TransferViewSet(viewsets.ReadOnlyModelViewSet):
         serializer.is_valid(raise_exception=True)
         user = User.objects.get(id=serializer.validated_data['user_id'])
         if user.school != request.user.school:
-            return Response({'error': 'Пользователь из другой школы'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': _('Пользователь из другой школы')}, status=status.HTTP_400_BAD_REQUEST)
         transfer, error = initiate_departure(user, request.user)
         if error:
             return Response({'error': error}, status=status.HTTP_400_BAD_REQUEST)

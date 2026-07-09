@@ -1,14 +1,14 @@
 {% extends 'dashboard/base_dashboard.html' %}
 {% load i18n %}
-{% block title %}Взять книгу — Учитель{% endblock %}
+{% block title %}{% trans "Взять книгу — Учитель" %}{% endblock %}
 {% block dashboard_content %}
-<h1 class="mb-3"><i data-lucide="book-marked" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> Взять обычную книгу</h1>
+<h1 class="mb-3"><i data-lucide="book-marked" class="icon-inline"></i> {% trans "Взять обычную книгу" %}</h1>
 <form method="post">
     {% csrf_token %}
     <div class="card max-w-600">
         {% if teachers %}
         <div class="mb-2">
-            <label class="form-label">Учитель</label>
+            <label class="form-label">{% trans "Учитель" %}</label>
             <select name="teacher_id" class="form-input" required>
                 {% for t in teachers %}
                 <option value="{{ t.id }}">{{ t.last_name }} {{ t.first_name }} ({{ t.subject }})</option>
@@ -17,7 +17,7 @@
         </div>
         {% endif %}
         <div class="mb-2">
-            <label class="form-label">Книги</label>
+            <label class="form-label">{% trans "Книги" %}</label>
             <div class="overflow-auto" style="max-height: 300px; border: 1px solid var(--border); border-radius: var(--radius); padding: 0.5rem;">
                 {% for book in books %}
                 <label class="flex items-center gap-sm p-1" style="font-size: 0.875rem;">
@@ -26,11 +26,11 @@
                     <span class="badge badge-info">{{ book.available_copies }}/{{ book.total_copies }}</span>
                 </label>
                 {% empty %}
-                <div class="empty-state" style="padding: 2rem;"><div class="icon" style="font-size: 2rem;"><i data-lucide="book-marked" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i></div><h3>Нет книг</h3><p>В библиотеке пока нет книг.</p></div>
+                <div class="empty-state" style="padding: 2rem;"><div class="icon" style="font-size: 2rem;"><i data-lucide="book-marked" class="icon-inline"></i></div><h3>{% trans "Нет книг" %}</h3><p>{% trans "В библиотеке пока нет книг." %}</p></div>
                 {% endfor %}
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">Взять</button>
+        <button type="submit" class="btn btn-primary">{% trans "Взять" %}</button>
     </div>
 </form>
 {% endblock %}

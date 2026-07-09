@@ -1,27 +1,27 @@
 {% extends 'dashboard/base_dashboard.html' %}
 {% load i18n %}
-{% block title %}Дашборд суперадмина{% endblock %}
+{% block title %}{% trans "Дашборд суперадмина" %}{% endblock %}
 {% block dashboard_content %}
 <div class="fade-in-up">
 <div class="page-header">
-    <h1><i data-lucide="layout-dashboard" style="width:2rem;height:2rem;vertical-align:middle;color:var(--color-primary);"></i> Панель суперадмина</h1>
+    <h1><i data-lucide="layout-dashboard" class="icon-xl icon-primary"></i> {% trans "Панель суперадмина" %}</h1>
 </div>
 
 <div class="stats-grid mb-4">
     <div class="card-stat">
         <div class="icon">🏘️</div>
         <div class="value">{{ districts|length }}</div>
-        <div class="label">Районов</div>
+        <div class="label">{% trans "Районов" %}</div>
     </div>
     <div class="card-stat">
         <div class="icon">🏛️</div>
         <div class="value">{{ schools|length }}</div>
-        <div class="label">Школ</div>
+        <div class="label">{% trans "Школ" %}</div>
     </div>
     <div class="card-stat">
-        <div class="icon"><i data-lucide="graduation-cap" style="width:2rem;height:2rem;"></i></div>
+        <div class="icon"><i data-lucide="graduation-cap" class="icon-xl"></i></div>
         <div class="value">{{ total_students }}</div>
-        <div class="label">Всего учеников</div>
+        <div class="label">{% trans "Всего учеников" %}</div>
     </div>
 </div>
 
@@ -29,21 +29,21 @@
     <canvas id="schoolChart" height="100"></canvas>
 </div>
 
-<h2 class="mb-2">🏘️ Районы</h2>
+<h2 class="mb-2">🏘️ {% trans "Районы" %}</h2>
 <div class="card-grid mb-4">
     {% for d in districts %}
     <div class="card card-hover">
         <strong style="font-size: 1.1rem;">{{ d.name }}</strong>
-        <span class="d-block text-muted mt-1" style="font-size: 0.9rem;"><i data-lucide="school" style="width:1rem;height:1rem;vertical-align:middle;"></i> {{ d.school_count }} школ</span>
+        <span class="d-block text-muted mt-1" style="font-size: 0.9rem;"><i data-lucide="school" class="icon-sm"></i> {{ d.school_count }} {% trans "школ" %}</span>
     </div>
-    {% empty %}<p class="text-muted">Нет районов</p>{% endfor %}
+    {% empty %}<p class="text-muted">{% trans "Нет районов" %}</p>{% endfor %}
 </div>
 
-<h2 class="mb-2"><i data-lucide="trophy" style="width:1.5rem;height:1.5rem;vertical-align:middle;"></i> Рейтинг школ (по среднему XP на ученика)</h2>
+<h2 class="mb-2"><i data-lucide="trophy" class="icon-lg"></i> {% trans "Рейтинг школ (по среднему XP на ученика)" %}</h2>
 <div class="table-wrap mb-4">
     <table>
         <thead>
-            <tr><th>#</th><th>Школа</th><th>Район</th><th class="text-right">Учеников</th><th class="text-right">Средний XP</th></tr>
+            <tr><th>#</th><th>{% trans "Школа" %}</th><th>{% trans "Район" %}</th><th class="text-right">{% trans "Учеников" %}</th><th class="text-right">{% trans "Средний XP" %}</th></tr>
         </thead>
         <tbody>
             {% for s in schools_ranking %}
@@ -54,16 +54,16 @@
                 <td class="text-right">{{ s.student_count }}</td>
                 <td class="text-right"><span class="badge badge-info">{{ s.avg_xp|default:0|floatformat:1 }}</span></td>
             </tr>
-            {% empty %}<tr><td colspan="5" class="text-center text-muted">Нет данных</td></tr>{% endfor %}
+            {% empty %}<tr><td colspan="5" class="text-center text-muted">{% trans "Нет данных" %}</td></tr>{% endfor %}
         </tbody>
     </table>
 </div>
 
-<h2 class="mb-2"><i data-lucide="school" style="width:1.5rem;height:1.5rem;vertical-align:middle;"></i> Все школы</h2>
+<h2 class="mb-2"><i data-lucide="school" class="icon-lg"></i> {% trans "Все школы" %}</h2>
 <div class="table-wrap">
     <table>
         <thead>
-            <tr><th>Школа</th><th>Район</th><th class="text-right">Учеников</th></tr>
+            <tr><th>{% trans "Школа" %}</th><th>{% trans "Район" %}</th><th class="text-right">{% trans "Учеников" %}</th></tr>
         </thead>
         <tbody>
             {% for s in schools %}
@@ -72,7 +72,7 @@
                 <td>{{ s.district.name }}</td>
                 <td class="text-right">{{ s.student_count }}</td>
             </tr>
-            {% empty %}<tr><td colspan="3" class="text-center text-muted">Нет школ</td></tr>{% endfor %}
+            {% empty %}<tr><td colspan="3" class="text-center text-muted">{% trans "Нет школ" %}</td></tr>{% endfor %}
         </tbody>
     </table>
 </div>
@@ -86,7 +86,7 @@ new Chart(ctx, {
     data: {
         labels: [{% for s in schools_ranking %}'{{ s.name|escapejs }}',{% endfor %}],
         datasets: [{
-            label: 'Средний XP',
+            label: '{% trans "Средний XP" %}',
             data: [{% for s in schools_ranking %}{{ s.avg_xp|default:0|floatformat:1 }},{% endfor %}],
             backgroundColor: 'rgba(13, 148, 136, 0.65)',
             borderColor: '#0d9488',
@@ -101,7 +101,7 @@ new Chart(ctx, {
             legend: { display: false },
             title: {
                 display: true,
-                text: 'Средний XP по школам',
+                text: '{% trans "Средний XP по школам" %}',
                 font: { size: 14, weight: 700 },
                 padding: { bottom: 16 }
             }

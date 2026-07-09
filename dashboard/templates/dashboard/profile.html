@@ -2,92 +2,79 @@
 {% load i18n %}
 {% block title %}{% trans "Профиль — Библиотечная система" %}{% endblock %}
 {% block dashboard_content %}
-<h1 class="mb-3">{% trans "Профиль" %}</h1>
+<div class="fade-in-up">
+
+<!-- Шапка профиля -->
+<div class="profile-hero">
+    <div class="avatar-xl">{{ user.last_name|slice:':1' }}{{ user.first_name|slice:':1' }}</div>
+    <div class="ph-info">
+        <div class="ph-name">{{ user.last_name }} {{ user.first_name }}</div>
+        <div class="ph-meta">
+            <span><i data-lucide="at-sign" class="icon-sm"></i> {{ user.login }}</span>
+            <span><i data-lucide="shield" class="icon-sm"></i> {{ user.get_role_display }}</span>
+            {% if user.school %}<span><i data-lucide="school" class="icon-sm"></i> {{ user.school.name }}</span>{% endif %}
+            {% if user.grade %}<span><i data-lucide="graduation-cap" class="icon-sm"></i> {{ user.grade }}</span>{% endif %}
+            {% if user.subject %}<span><i data-lucide="book" class="icon-sm"></i> {{ user.subject }}</span>{% endif %}
+        </div>
+    </div>
+    {% if level_info or streak %}
+    <div class="ph-badges">
+        {% if level_info %}
+        <div class="ph-stat"><div class="v">{{ level_info.level.number }}</div><div class="l">{% trans "Уровень" %}</div></div>
+        <div class="ph-stat"><div class="v">{{ level_info.total_xp }}</div><div class="l">XP</div></div>
+        {% endif %}
+        {% if streak %}
+        <div class="ph-stat"><div class="v">{{ streak.current_streak }}</div><div class="l">{% trans "Стрик" %}</div></div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Прогресс уровня -->
+{% if level_info and level_info.level.next_level_xp %}
+<div class="card mb-3">
+    <div class="flex items-center justify-between mb-05">
+        <span class="font-bold"><i data-lucide="trending-up" class="icon-sm"></i> {% trans "Прогресс до следующего уровня" %}</span>
+        <span class="color-accent nums">{{ level_info.progress_percent|default:0 }}%</span>
+    </div>
+    <div class="level-progress"><span style="width: {{ level_info.progress_percent|default:0 }}%;"></span></div>
+    <div class="flex items-center justify-between mt-05">
+        <span class="text-xs text-muted">{{ level_info.total_xp }} / {{ level_info.level.next_level_xp }} XP</span>
+        {% if streak and streak.frozen_days > 0 %}<span class="badge badge-warning"><i data-lucide="snowflake" class="icon-2xs"></i> {% blocktranslate %}{{ streak.frozen_days }} заморозок{% endblocktranslate %}</span>{% endif %}
+    </div>
+</div>
+{% endif %}
 
 <div class="grid-2 mb-3">
     <div class="card">
-        <div class="mb-15"><strong>{% trans "Логин:" %}</strong> {{ user.login }}</div>
-        <div class="mb-15"><strong>{% trans "ФИО:" %}</strong> {{ user.last_name }} {{ user.first_name }}</div>
-        <div class="mb-15"><strong>{% trans "Роль:" %}</strong> {{ user.get_role_display }}</div>
-        {% if user.school %}
-        <div class="mb-15"><strong>{% trans "Школа:" %}</strong> {{ user.school.name }}</div>
-        {% endif %}
-        {% if user.grade %}
-        <div class="mb-15"><strong>{% trans "Класс:" %}</strong> {{ user.grade }}</div>
-        {% endif %}
-        {% if user.subject %}
-        <div class="mb-15"><strong>{% trans "Предмет:" %}</strong> {{ user.subject }}</div>
-        {% endif %}
+        <h2 class="mb-15"><i data-lucide="user-pen" class="icon-inline"></i> {% trans "Редактировать профиль" %}</h2>
+        <form method="post" action="{% url 'dashboard:edit_profile' %}">
+            {% csrf_token %}
+            <div class="grid-2 gap-sm mb-1">
+                <input type="text" name="last_name" value="{{ user.last_name }}" placeholder="{% trans 'Фамилия' %}" required class="form-input">
+                <input type="text" name="first_name" value="{{ user.first_name }}" placeholder="{% trans 'Имя' %}" required class="form-input">
+            </div>
+            <button class="btn btn-primary" type="submit"><i data-lucide="check" class="icon-sm"></i> {% trans "Сохранить" %}</button>
+        </form>
     </div>
-    {% if level_info or streak %}
+
     <div class="card">
-        <h2 class="mb-15"><i data-lucide="star" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Геймификация" %}</h2>
-        {% if level_info %}
-        <div class="mb-1">
-            <strong>{% trans "Уровень:" %}</strong> {{ level_info.level.number }}
-            <span class="badge badge-info">{{ level_info.total_xp }} XP</span>
-        </div>
-        {% endif %}
-        {% if streak %}
-        <div class="mb-1">
-            <strong>{% trans "Стрик:" %}</strong> {% blocktranslate %}{{ streak.current_streak }} дней{% endblocktranslate %}
-            {% if streak.frozen_days > 0 %}
-            <span class="badge badge-warning">❄️ {% blocktranslate %}{{ streak.frozen_days }} заморозок{% endblocktranslate %}</span>
-            {% endif %}
-        </div>
-        <div class="text-muted">
-            {% blocktranslate %}Макс: {{ streak.longest_streak }} дней{% endblocktranslate %}
-        </div>
-        {% endif %}
+        <h2 class="mb-15"><i data-lucide="key-round" class="icon-inline"></i> {% trans "Смена пароля" %}</h2>
+        {% if password_error %}<div class="error mb-1">{{ password_error }}</div>{% endif %}
+        <form method="post" action="{% url 'dashboard:change_password' %}">
+            {% csrf_token %}
+            <div class="flex flex-col gap-sm">
+                <input type="password" name="old_password" placeholder="{% trans 'Текущий пароль' %}" required class="form-input">
+                <input type="password" name="new_password" placeholder="{% trans 'Новый пароль (мин. 6)' %}" required class="form-input">
+                <input type="password" name="confirm_password" placeholder="{% trans 'Подтвердите пароль' %}" required class="form-input">
+                <button class="btn btn-primary" type="submit"><i data-lucide="lock" class="icon-sm"></i> {% trans "Сменить пароль" %}</button>
+            </div>
+        </form>
     </div>
-    {% endif %}
-</div>
-
-<div class="card mb-3">
-    <h2 class="mb-15">✏️ {% trans "Редактировать профиль" %}</h2>
-    <form method="post" action="{% url 'dashboard:edit_profile' %}">
-        {% csrf_token %}
-        <div class="grid-2 max-w-400 gap-sm mb-1">
-            <input type="text" name="last_name" value="{{ user.last_name }}" placeholder="{% trans 'Фамилия' %}" required class="form-input">
-            <input type="text" name="first_name" value="{{ user.first_name }}" placeholder="{% trans 'Имя' %}" required class="form-input">
-        </div>
-        <button class="btn btn-primary" type="submit">{% trans "Сохранить" %}</button>
-    </form>
-</div>
-
-<div class="card mb-3">
-    <h2 class="mb-15"><i data-lucide="key" style="width:1.25rem;height:1.25rem;vertical-align:middle;"></i> {% trans "Смена пароля" %}</h2>
-    {% if password_error %}<div class="error mb-1">{{ password_error }}</div>{% endif %}
-    <form method="post" action="{% url 'dashboard:change_password' %}">
-        {% csrf_token %}
-        <div class="grid-2 max-w-400 gap-sm">
-            <input type="password" name="old_password" placeholder="{% trans 'Текущий пароль' %}" required class="form-input">
-            <input type="password" name="new_password" placeholder="{% trans 'Новый пароль (мин. 6)' %}" required class="form-input">
-            <input type="password" name="confirm_password" placeholder="{% trans 'Подтвердите пароль' %}" required class="form-input">
-            <button class="btn btn-primary" type="submit">{% trans "Сменить пароль" %}</button>
-        </div>
-    </form>
 </div>
 
 {% if all_achievements %}
-{% if level_info %}
-<div class="card mb-2 fade-in-up">
-    <div class="flex items-center justify-between mb-05">
-        <span class="font-bold">{% trans "Уровень" %} {{ level_info.level.number }}</span>
-        <span class="color-accent nums">{{ level_info.total_xp }} XP</span>
-    </div>
-    {% if level_info.level.next_level_xp %}
-    <div class="relative" style="height: 8px; background: var(--bg-tertiary); border-radius: 999px; overflow: hidden;">
-        <div style="width: {{ level_info.progress_percent|default:0 }}%; height: 100%; background: var(--color-accent-gold); border-radius: 999px; transition: width 0.5s ease;"></div>
-    </div>
-    <div class="flex items-center justify-between mt-05">
-        <span class="text-xs text-muted">{{ level_info.total_xp }} / {{ level_info.level.next_level_xp }} XP</span>
-        <span class="text-xs text-muted">{{ level_info.progress_percent|default:0 }}%</span>
-    </div>
-    {% endif %}
-</div>
-{% endif %}
-<h2 class="mb-2">🏅 {% trans "Зал достижений" %}</h2>
+<h2 class="mb-2"><i data-lucide="award" class="icon-lg icon-accent"></i> {% trans "Зал достижений" %}</h2>
 <div class="card-grid">
     {% for ach in all_achievements %}
     <div class="card text-center">
@@ -100,4 +87,5 @@
     {% endfor %}
 </div>
 {% endif %}
+</div>
 {% endblock %}

@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from apps.gamification.models import (
     XPTransaction, Level, UserLevel, Achievement, UserAchievement,
     Streak, Challenge, ChallengeAttempt,
@@ -75,7 +76,7 @@ class ChallengeViewSet(viewsets.ModelViewSet):
 
     def _check_moderator(self, request):
         if request.user.role not in ('school_admin', 'superadmin'):
-            return Response({'error': 'Доступ запрещён'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': _('Доступ запрещён')}, status=status.HTTP_403_FORBIDDEN)
         return None
 
     @action(detail=True, methods=['post'])
@@ -84,7 +85,7 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         if err: return err
         challenge = self.get_object()
         if challenge.status != Challenge.Status.DRAFT:
-            return Response({'error': 'Челлендж не в статусе черновика'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': _('Челлендж не в статусе черновика')}, status=status.HTTP_400_BAD_REQUEST)
         questions = request.data.get('questions', challenge.questions)
         challenge.questions = questions
         challenge.status = Challenge.Status.PUBLISHED
@@ -97,7 +98,7 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         if err: return err
         challenge = self.get_object()
         if challenge.status != Challenge.Status.DRAFT:
-            return Response({'error': 'Челлендж не в статусе черновика'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': _('Челлендж не в статусе черновика')}, status=status.HTTP_400_BAD_REQUEST)
         challenge.status = Challenge.Status.PUBLISHED
         challenge.save()
         return Response(ChallengeSerializer(challenge).data)
@@ -126,14 +127,14 @@ class ChallengeAttemptViewSet(viewsets.ModelViewSet):
         try:
             challenge = Challenge.objects.get(id=challenge_id)
         except Challenge.DoesNotExist:
-            return Response({'error': 'Челлендж не найден'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': _('Челлендж не найден')}, status=status.HTTP_404_NOT_FOUND)
         if challenge.status != Challenge.Status.PUBLISHED:
-            return Response({'error': 'Челлендж ещё не опубликован'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': _('Челлендж ещё не опубликован')}, status=status.HTTP_400_BAD_REQUEST)
         if len(challenge.questions) != 15:
-            return Response({'error': 'Челлендж должен содержать ровно 15 вопросов'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': _('Челлендж должен содержать ровно 15 вопросов')}, status=status.HTTP_400_BAD_REQUEST)
         for i, q in enumerate(challenge.questions):
             if len(q.get('options', [])) != 3 or ('correct' not in q and 'correct_index' not in q):
-                return Response({'error': f'Вопрос {i+1} должен иметь ровно 3 варианта ответа'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': _('Вопрос %d должен иметь ровно 3 варианта ответа') % (i + 1)}, status=status.HTTP_400_BAD_REQUEST)
         order = list(range(len(challenge.questions)))
         random.shuffle(order)
         attempt, created = ChallengeAttempt.objects.get_or_create(
@@ -148,7 +149,7 @@ class ChallengeAttemptViewSet(viewsets.ModelViewSet):
         question_idx = request.data.get('question_idx')
         answer = request.data.get('answer')
         if attempt.is_completed:
-            return Response({'error': 'Челлендж уже завершён'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': _('Челлендж уже завершён')}, status=status.HTTP_400_BAD_REQUEST)
         attempt.answers[str(question_idx)] = answer
         attempt.save()
         return Response(ChallengeAttemptSerializer(attempt).data)
@@ -157,7 +158,7 @@ class ChallengeAttemptViewSet(viewsets.ModelViewSet):
     def finish(self, request, pk=None):
         attempt = self.get_object()
         if attempt.is_completed:
-            return Response({'error': 'Уже завершён'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': _('Уже завершён')}, status=status.HTTP_400_BAD_REQUEST)
         now = timezone.now()
         elapsed = (now - attempt.started_at).total_seconds() / 60
         if elapsed > attempt.time_limit_minutes:
