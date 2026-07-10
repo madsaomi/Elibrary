@@ -2,7 +2,7 @@
 {% load i18n %}
 {% block title %}{% trans "Модерация челленджей — Библиотечная система" %}{% endblock %}
 {% block dashboard_content %}
-<h1 class="mb-3"><i data-lucide="brain" class="icon-inline"></i> {% trans "Модерация челленджей" %}</h1>
+<h1 class="mb-3" data-publish-base-url="{% url 'challenge-publish' pk=0 %}"><i data-lucide="brain" class="icon-inline"></i> {% trans "Модерация челленджей" %}</h1>
 
 <div class="flex flex-col gap-lg">
     {% for challenge in challenges %}
@@ -33,7 +33,8 @@
 {% block extra_scripts %}
 <script>
 function publishChallenge(id) {
-    fetch('/api/v1/challenges/' + id + '/publish/', {
+    const publishBaseUrl = document.querySelector('h1').dataset.publishBaseUrl;
+    fetch(publishBaseUrl.replace('0', id), {
         method: 'POST',
         headers: {'X-CSRFToken': '{{ csrf_token }}'},
     }).then(r => r.json()).then(() => location.reload());

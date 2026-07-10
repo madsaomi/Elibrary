@@ -3,6 +3,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.shortcuts import render
 from django.urls import path, include
+from decouple import config
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
 
@@ -14,12 +15,18 @@ def handler403(request, exception):
     return render(request, '403.html', status=403)
 
 
+def handler400(request, exception):
+    return render(request, '400.html', status=400)
+
+
 def handler500(request):
     return render(request, '500.html', status=500)
 
 
+admin_url = config('DJANGO_ADMIN_URL', default='admin/')
+
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path(f'{admin_url}', admin.site.urls),
     path('api/v1/', include('api.v1.urls')),
     path('auth/', include('apps.accounts.urls')),
     path('', include('dashboard.urls')),

@@ -7,7 +7,7 @@
     <h1><i data-lucide="log-in" class="icon-inline"></i> {% blocktranslate %}Принять учебники — {{ student.last_name }} {{ student.first_name }}{% endblocktranslate %}</h1>
 </div>
 <p class="text-muted mb-4" style="font-size: 0.95rem;">
-    <strong>{{ student.last_name }} {{ student.first_name }}</strong> · {{ student.grade|default:_('без класса') }}
+    <strong>{{ student.last_name }} {{ student.first_name }}</strong> · {% if student.grade %}{{ student.grade }}{% else %}{% trans "без класса" %}{% endif %}
 </p>
 <form method="post" onsubmit="return confirm('{% trans "Подтвердите приём учебников" %}')">
     {% csrf_token %}
@@ -34,16 +34,27 @@
     </div>
     
     <div class="flex items-center gap-md mb-4">
-        <button type="submit" class="btn btn-primary"><i data-lucide="log-in" class="icon-inline"></i> {% trans "Принять выбранные" %}</button>
+        <button type="submit" class="btn btn-primary" id="returnSubmitBtn"><i data-lucide="log-in" class="icon-inline"></i> {% trans "Принять выбранные" %}</button>
     </div>
     
     <div class="card p-3" style="background: var(--color-danger-light); border: 1px solid var(--danger);">
         <label class="flex items-center gap-sm mb-1" style="font-size: 0.95rem;">
-            <input type="checkbox" name="forced" value="1" onchange="this.form.querySelector('button[type=submit]').textContent = this.checked ? '<i data-lucide="alert-triangle" class="icon-inline"></i> {% trans "Принудительный возврат" %}' : '<i data-lucide="log-in" class="icon-inline"></i> {% trans "Принять выбранные" %}'">
+            <input type="checkbox" name="forced" value="1" onchange="toggleReturnMode(this)">
             <strong style="color: var(--danger);">{% trans "Принудительный возврат" %}</strong>
         </label>
         <p class="text-muted text-sm m-0">{% trans "Используется только когда самообслуживание через QR-код невозможно. Операция будет помечена в логе." %}</p>
     </div>
 </form>
 </div>
+<script>
+function toggleReturnMode(checkbox) {
+    var btn = document.getElementById('returnSubmitBtn');
+    if (checkbox.checked) {
+        btn.innerHTML = '<i data-lucide="alert-triangle" class="icon-inline"></i> {% trans "Принудительный возврат" %}';
+    } else {
+        btn.innerHTML = '<i data-lucide="log-in" class="icon-inline"></i> {% trans "Принять выбранные" %}';
+    }
+    lucide.createIcons();
+}
+</script>
 {% endblock %}

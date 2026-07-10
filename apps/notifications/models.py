@@ -33,11 +33,11 @@ class Notification(UUIDPrimaryKeyMixin, TimestampMixin, models.Model):
         NEWS = 'news', 'Новость'
         SYSTEM = 'system', 'Системное'
 
-    user = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='notifications', verbose_name='Пользователь')
+    user = models.ForeignKey('accounts.User', on_delete=models.CASCADE, db_index=True, related_name='notifications', verbose_name='Пользователь')
     type = models.CharField(max_length=20, choices=Type.choices, default=Type.SYSTEM, verbose_name='Тип')
     message = models.CharField(max_length=500, verbose_name='Сообщение')
     link = models.CharField(max_length=300, blank=True, verbose_name='Ссылка')
-    is_read = models.BooleanField(default=False, verbose_name='Прочитано')
+    is_read = models.BooleanField(default=False, db_index=True, verbose_name='Прочитано')
 
     class Meta:
         verbose_name = 'Уведомление'

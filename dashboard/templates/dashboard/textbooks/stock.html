@@ -6,7 +6,7 @@
 <form method="post" class="card mb-3 p-3">
     {% csrf_token %}
     <div class="flex gap-sm items-end flex-wrap">
-        <div><label class="form-label">Учебник</label><select name="textbook_id" class="form-input" required><option value="">— выберите —</option>{% for tb in textbooks %}<option value="{{ tb.id }}">{{ tb.title }} ({{ tb.subject }}, {{ tb.grade_number }} кл.)</option>{% endfor %}</select></div>
+        <div><label class="form-label">Учебник</label><select name="textbook_id" class="form-input" required><option value="">— выберите —</option>{% for tb in textbooks %}<option value="{{ tb.id }}">{{ tb.title }} ({{ tb.subject }}, {{ tb.grade_number }} кл.)</option>{% empty %}<option value="" disabled>{% trans "Нет учебников" %}</option>{% endfor %}</select></div>
         <div><label class="form-label">Всего экземпляров</label><input name="total_copies" type="number" min="0" class="form-input" style="width:100px" required></div>
         <div><button class="btn btn-primary" type="submit">Сохранить</button></div>
     </div>

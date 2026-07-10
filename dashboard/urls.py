@@ -39,6 +39,7 @@ urlpatterns = [
     path('superadmin/districts/', views.manage_districts, name='manage_districts'),
     path('superadmin/schools/', views.manage_schools, name='manage_schools'),
     path('superadmin/classes/', views.manage_classes, name='manage_classes'),
+    path('superadmin/admins/', views.manage_admins, name='manage_admins'),
     path('superadmin/subject-textbooks/', views.manage_subject_textbooks, name='manage_subject_textbooks'),
     path('loans/teacher-multi/', views.multi_class_teacher_borrow, name='multi_teacher_borrow'),
     path('challenges/', views.challenge_leaderboard, name='challenge_leaderboard'),

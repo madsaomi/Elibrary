@@ -1,37 +1,68 @@
 {% extends 'dashboard/base_dashboard.html' %}
 {% load i18n %}
-{% block title %}{% trans "Управление школами" %}{% endblock %}
+{% block title %}{% trans "Школы и районы" %}{% endblock %}
 {% block dashboard_content %}
-<h1 class="mb-3">🏛️ {% trans "Управление школами" %}</h1>
-{% if error %}<div class="error mb-2">{{ error }}</div>{% endif %}
-<div class="card max-w-500 mb-3">
-    <form method="post">
-        {% csrf_token %}
-        <div class="mb-15">
-            <label class="form-label">{% trans "Название школы" %}</label>
-            <input type="text" name="name" class="form-input" required>
-        </div>
-        <div class="mb-15">
-            <label class="form-label">{% trans "Район" %}</label>
-            <select name="district_id" class="form-input" required>
+<div class="fade-in-up">
+<div class="page-header">
+    <h1><i data-lucide="school" class="icon-inline"></i> {% trans "Школы и районы" %}</h1>
+</div>
+
+{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+<div class="card p-3 mb-3">
+    <div class="flex items-center gap-md" style="flex-wrap:wrap;">
+        <form method="post" class="flex items-center gap-sm">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="district">
+            <i data-lucide="map-pin" class="icon-inline text-muted" style="width:18px;height:18px;"></i>
+            <input type="text" name="name" class="form-input" placeholder="{% trans 'Название района' %}" required style="width:180px;">
+            <button type="submit" class="btn btn-primary btn-sm">{% trans "Добавить район" %}</button>
+        </form>
+        <span class="text-muted" style="font-size:0.85rem;">|</span>
+        <form method="post" class="flex items-center gap-sm">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="school">
+            <i data-lucide="plus" class="icon-inline text-muted" style="width:18px;height:18px;"></i>
+            <input type="text" name="name" class="form-input" placeholder="{% trans 'Название школы' %}" required style="width:200px;">
+            <select name="district_id" class="form-input" required style="width:160px;">
+                <option value="">{% trans "Район..." %}</option>
                 {% for d in districts %}
                 <option value="{{ d.id }}">{{ d.name }}</option>
                 {% endfor %}
             </select>
-        </div>
-        <button type="submit" class="btn btn-primary"><i data-lucide="plus" class="icon-inline"></i> {% trans "Создать школу (с админом)" %}</button>
-    </form>
+            <button type="submit" class="btn btn-primary btn-sm">{% trans "Создать" %}</button>
+        </form>
+    </div>
 </div>
-<div class="card overflow-x-auto">
-    <table>
-        <thead><tr><th>{% trans "Школа" %}</th><th>{% trans "Район" %}</th><th>{% trans "Учеников" %}</th></tr></thead>
-        <tbody>
-            {% for s in schools %}
-            <tr><td>{{ s.name }}</td><td>{{ s.district.name }}</td><td>{{ s.student_count }}</td></tr>
-            {% empty %}
-            <tr><td colspan="3" class="text-muted">{% trans "Нет школ" %}</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+
+<div id="schools-list">
+{% regroup schools by district as schools_by_district %}
+{% for group in schools_by_district %}
+<div class="card p-3 mb-2">
+    <div class="flex items-center gap-sm mb-2">
+        <i data-lucide="map-pin" class="icon-inline" style="width:18px;height:18px;color:var(--color-primary);"></i>
+        <h2 class="m-0" style="font-size:1.1rem;font-weight:700;">{{ group.grouper.name }}</h2>
+        <span class="badge badge-info" style="font-size:0.75rem;">{{ group.list|length }}</span>
+    </div>
+    {% if group.list %}
+    <div class="flex flex-column gap-xs">
+        {% for s in group.list %}
+        <div class="flex items-center gap-sm" style="padding:0.35rem 0.75rem;border-radius:var(--radius-sm);background:var(--color-surface);border:1px solid var(--color-border);">
+            <i data-lucide="building-2" class="icon-inline text-muted" style="width:16px;height:16px;"></i>
+            <span style="flex:1;font-weight:500;">{{ s.name }}</span>
+            <span class="text-muted" style="font-size:0.85rem;">{{ s.student_count }} {% trans "уч." %}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-muted m-0" style="font-size:0.9rem;">{% trans "Нет школ в районе" %}</p>
+    {% endif %}
+</div>
+{% empty %}
+<div class="card p-3 text-center">
+    <i data-lucide="building-2" class="icon-3xl icon-faded mb-1"></i>
+    <p class="text-muted m-0">{% trans "Нет школ. Создайте район и школу." %}</p>
+</div>
+{% endfor %}
 </div>
 {% endblock %}

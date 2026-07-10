@@ -1,9 +1,10 @@
 from django.db import transaction
 from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
 
 from apps.accounts.models import User
 from apps.loans.models import TextbookLoan, RegularBookLoan
-from apps.gamification.models import UserLevel
+from apps.gamification.models import UserLevel, XPTransaction
 from apps.schools.models import TransferLog
 
 
@@ -39,7 +40,10 @@ def complete_departure(user_id, initiated_by):
     if not transfer:
         return None, 'Нет активного запроса на уход'
 
-    user = User.objects.get(id=user_id)
+    try:
+        user = User.objects.get(id=user_id)
+    except ObjectDoesNotExist:
+        return None, 'Пользователь не найден'
     user.school = None
     user.grade = None
     user.transfer_status = 'pending'
@@ -59,7 +63,10 @@ def accept_transfer(user_id, to_school, initiated_by):
     if not transfer:
         return None, 'Нет пользователя, ожидающего перевода'
 
-    user = User.objects.get(id=user_id)
+    try:
+        user = User.objects.get(id=user_id)
+    except ObjectDoesNotExist:
+        return None, 'Пользователь не найден'
     old_school = transfer.from_school
     user.school = to_school
     user.transfer_status = 'completed'
@@ -70,10 +77,15 @@ def accept_transfer(user_id, to_school, initiated_by):
 
     user_level = UserLevel.objects.filter(user=user).first()
     if user_level:
+        lost_xp = user_level.total_xp - int(user_level.total_xp * 0.5)
         user_level.total_xp = int(user_level.total_xp * 0.5)
         user_level.save()
         from apps.gamification.services import update_user_level
         update_user_level(user_level)
+        XPTransaction.objects.create(
+            user=user, amount=-lost_xp, reason='transfer_loss',
+            school=to_school,
+        )
         xp_after = user_level.total_xp
     else:
         xp_after = 0
@@ -101,7 +113,10 @@ def cancel_transfer(user_id):
     if not transfer:
         return None, 'Нет активного перевода'
 
-    user = User.objects.get(id=user_id)
+    try:
+        user = User.objects.get(id=user_id)
+    except ObjectDoesNotExist:
+        return None, 'Пользователь не найден'
     if transfer.status == TransferLog.Status.PENDING:
         if transfer.from_school:
             user.school = transfer.from_school

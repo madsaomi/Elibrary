@@ -13,7 +13,6 @@ class Command(BaseCommand):
                 'description': 'Заработать стрик 7 дней подряд',
                 'icon_emoji': '🔥',
                 'category': Achievement.Category.STREAK,
-                'condition': {'field': 'streak', 'gte': 7}
             },
             {
                 'code': 'streak_30',
@@ -21,7 +20,6 @@ class Command(BaseCommand):
                 'description': 'Заработать стрик 30 дней подряд',
                 'icon_emoji': '🗓️',
                 'category': Achievement.Category.STREAK,
-                'condition': {'field': 'streak', 'gte': 30}
             },
             {
                 'code': 'xp_100',
@@ -29,7 +27,6 @@ class Command(BaseCommand):
                 'description': 'Накопить первые 100 XP',
                 'icon_emoji': '🌱',
                 'category': Achievement.Category.XP,
-                'condition': {'field': 'total_xp', 'gte': 100}
             },
             {
                 'code': 'xp_1000',
@@ -37,7 +34,6 @@ class Command(BaseCommand):
                 'description': 'Накопить 1000 XP',
                 'icon_emoji': '⭐',
                 'category': Achievement.Category.XP,
-                'condition': {'field': 'total_xp', 'gte': 1000}
             },
             {
                 'code': 'xp_10000',
@@ -45,7 +41,6 @@ class Command(BaseCommand):
                 'description': 'Накопить 10000 XP',
                 'icon_emoji': '👑',
                 'category': Achievement.Category.XP,
-                'condition': {'field': 'total_xp', 'gte': 10000}
             },
             {
                 'code': 'first_book',
@@ -53,7 +48,6 @@ class Command(BaseCommand):
                 'description': 'Сдать первую прочитанную книгу вовремя',
                 'icon_emoji': '📖',
                 'category': Achievement.Category.BOOKS,
-                'condition': {'field': 'books_returned', 'gte': 1}
             },
             {
                 'code': 'bookworm_50',
@@ -61,7 +55,6 @@ class Command(BaseCommand):
                 'description': 'Прочитать и вернуть 50 книг',
                 'icon_emoji': '📚',
                 'category': Achievement.Category.BOOKS,
-                'condition': {'field': 'books_returned', 'gte': 50}
             },
         ]
 
@@ -76,7 +69,6 @@ class Command(BaseCommand):
                     'description': ach_data['description'],
                     'icon_emoji': ach_data['icon_emoji'],
                     'category': ach_data['category'],
-                    'condition': ach_data['condition']
                 }
             )
             if created:

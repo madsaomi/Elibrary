@@ -101,10 +101,10 @@
                                         <td class="text-right">
                                             <a href="{% url 'dashboard:issue_textbooks' %}?student_id={{ s.id }}" class="btn btn-sm btn-ghost" title="{% trans 'Выдать' %}"><i data-lucide="send" class="icon-sm"></i></a>
 
-                                            <form method="post" action="{% url 'dashboard:class_transfer_student' cls.id %}" class="inline-form" style="display:inline;">
+                                            <form method="post" action="{% url 'dashboard:class_transfer_student' cls.id %}" class="inline-form" style="display:inline;" onsubmit="return confirm('{% trans "Перевести ученика в другой класс?" %}')">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="student_id" value="{{ s.id }}">
-                                                <select name="to_class_id" class="form-input" style="width:auto;display:inline;padding:0.2rem 0.4rem;font-size:0.75rem;" onchange="this.form.submit()">
+                                                <select name="to_class_id" class="form-input" style="width:auto;display:inline;padding:0.2rem 0.4rem;font-size:0.75rem;" onchange="if(confirm('{% trans "Перевести ученика в другой класс?" %}')){this.form.submit()}">
                                                     <option value="">{% trans "Перевести" %}</option>
                                                     {% for c in classes %}
                                                     {% if c.id != cls.id %}
@@ -146,9 +146,6 @@
         <i data-lucide="school" class="icon-3xl icon-faded"></i>
         <h3 class="mt-2">{% trans "Нет классов" %}</h3>
         <p class="text-muted">{% trans "Создайте первый класс" %}</p>
-        <button class="btn btn-primary mt-1" onclick="document.getElementById('createModal').classList.add('open')">
-            <i data-lucide="plus" class="icon-sm"></i> {% trans "Создать класс" %}
-        </button>
     </div>
 </div>
 {% endif %}
@@ -211,7 +208,7 @@
     <div class="grid-2 gap-md p-3">
         <div class="card p-2">
             <h4><i data-lucide="log-out" class="icon-sm"></i> {% trans "Оформить уход" %}</h4>
-            <form method="post" action="{% url 'dashboard:transfer_depart' %}">
+            <form method="post" action="{% url 'dashboard:transfer_depart' %}" onsubmit="return confirm('{% trans "Инициировать уход ученика?" %}')">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="initiate">
                 <input type="text" name="user_id" class="form-input" placeholder="{% trans 'ID ученика' %}" required>
@@ -220,7 +217,7 @@
         </div>
         <div class="card p-2">
             <h4><i data-lucide="log-in" class="icon-sm"></i> {% trans "Принять ученика" %}</h4>
-            <form method="post" action="{% url 'dashboard:transfer_accept' %}">
+            <form method="post" action="{% url 'dashboard:transfer_accept' %}" onsubmit="return confirm('{% trans "Принять ученика в школу?" %}')">
                 {% csrf_token %}
                 <input type="text" name="user_login" class="form-input" placeholder="{% trans 'Логин ученика' %}" required>
                 <button type="submit" class="btn btn-primary btn-sm mt-1"><i data-lucide="log-in" class="icon-sm"></i> {% trans "Принять" %}</button>
@@ -241,7 +238,7 @@
                     <td><span class="badge badge-warning">{{ t.get_status_display }}</span></td>
                     <td class="text-right">
                         {% if t.status == 'departing' %}
-                        <form method="post" action="{% url 'dashboard:transfer_depart' %}">
+                        <form method="post" action="{% url 'dashboard:transfer_depart' %}" onsubmit="return confirm('{% trans "Подтвердить уход ученика?" %}')">
                             {% csrf_token %}
                             <input type="hidden" name="user_id" value="{{ t.user.id }}">
                             <input type="hidden" name="action" value="complete">
@@ -268,7 +265,7 @@
                     <td>{{ t.user.login }}</td>
                     <td>{{ t.from_school.name }}</td>
                     <td class="text-right">
-                        <form method="post" action="{% url 'dashboard:transfer_accept' %}">
+                        <form method="post" action="{% url 'dashboard:transfer_accept' %}" onsubmit="return confirm('{% trans "Принять ученика?" %}')">
                             {% csrf_token %}
                             <input type="hidden" name="user_login" value="{{ t.user.login }}">
                             <button class="btn btn-primary btn-sm"><i data-lucide="log-in" class="icon-sm"></i> {% trans "Принять" %}</button>

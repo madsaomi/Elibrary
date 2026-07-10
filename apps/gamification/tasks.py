@@ -6,7 +6,7 @@ import datetime
 from apps.gamification.models import Challenge
 from apps.gamification.services import generate_challenge_questions
 from apps.accounts.models import User
-from apps.schools.models import Class
+from apps.schools.models import School
 
 logger = logging.getLogger(__name__)
 
@@ -26,25 +26,23 @@ def generate_weekly_challenges():
     
     logger.info(f"Начало генерации челленджей на неделю с {next_monday}")
     
-    # Находим все классы (5-11), в которых есть хотя бы один ученик
-    # Сначала найдем активных учеников 5-11 классов
-    active_students = User.objects.filter(
-        role=User.Role.STUDENT,
-        is_active_for_gamification=True,
-        grade__number__gte=5,
-        grade__number__lte=11
-    ).select_related('school', 'grade')
-    
-    # Собираем уникальные комбинации: (school_id, grade_number, language)
-    combinations = set()
-    for student in active_students:
-        if student.school and student.grade:
-            combinations.add((student.school, student.grade.number, student.grade.language))
+    # Находим все уникальные комбинации (school, grade_number, language)
+    combinations = set(
+        User.objects.filter(
+            role=User.Role.STUDENT,
+            is_active_for_gamification=True,
+            grade__number__gte=5,
+            grade__number__lte=11,
+            school__isnull=False,
+            grade__isnull=False,
+        ).values_list('school_id', 'grade__number', 'grade__language').distinct()
+    )
             
     created_count = 0
     error_count = 0
     
-    for school, grade_number, language in combinations:
+    for school_id, grade_number, language in combinations:
+        school = School.objects.get(id=school_id)
         # Проверяем, есть ли уже опубликованный челлендж для этой комбинации на эту неделю
         exists = Challenge.objects.filter(
             school=school,

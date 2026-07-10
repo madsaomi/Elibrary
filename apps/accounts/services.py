@@ -43,9 +43,11 @@ def generate_login(first_name, last_name, school_id):
     base = f'{to_latin(first_name).lower()}.{to_latin(last_name).lower()}'
     login = base
     suffix = 1
-    while User.objects.filter(login=login).exists():
+    while User.objects.filter(login=login).exists() and suffix < 1000:
         login = f'{base}{suffix}'
         suffix += 1
+    if suffix >= 1000:
+        login = f'{base}.{secrets.token_hex(4)}'
     return login
 
 
@@ -91,17 +93,18 @@ def auth_logout(request):
 def activate_grade_access(school, grade_number, academic_year):
     classes = Class.objects.filter(school=school, number=grade_number, academic_year=academic_year)
     results = []
-    for cls in classes:
-        students = User.objects.filter(role=User.Role.STUDENT, grade=cls, school=school)
-        for student in students:
-            if not student.login:
-                student.login = generate_login(student.first_name or 'student', student.last_name or str(student.id), school.id)
-            if not student.has_usable_password():
-                password = generate_password()
-                student.set_password(password)
-            else:
-                password = None
-            student.is_active_for_gamification = True
-            student.save()
-            results.append({'student': student, 'password': password})
+    students = User.objects.filter(
+        role=User.Role.STUDENT, grade__in=list(classes), school=school
+    ).select_for_update()
+    for student in students:
+        if not student.login:
+            student.login = generate_login(student.first_name or 'student', student.last_name or str(student.id), school.id)
+        if not student.has_usable_password():
+            password = generate_password()
+            student.set_password(password)
+        else:
+            password = None
+        student.is_active_for_gamification = True
+        student.save()
+        results.append({'student': student, 'password': password})
     return results

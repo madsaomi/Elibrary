@@ -13,7 +13,7 @@
 
 <h2 class="mb-2"><i data-lucide="book-marked" class="icon-inline"></i> {% trans "Учебники" %}</h2>
 <div class="item-grid mb-4">
-    {% for tb in textbooks %}
+    {% for tb in page_obj_textbooks %}
     <div class="item-card">
         <a href="{% url 'dashboard:textbook_detail' tb.id %}">
             {% if tb.cover %}<img loading="lazy" src="{{ tb.cover.url }}" alt="{{ tb.title }}" class="item-cover">{% else %}<div class="item-cover-ph"><i data-lucide="book-marked"></i></div>{% endif %}
@@ -39,7 +39,7 @@
 
 <h2 class="mb-2"><i data-lucide="book-open" class="icon-inline"></i> {% trans "Книги" %}</h2>
 <div class="item-grid">
-    {% for book in books %}
+    {% for book in page_obj_books %}
     <div class="item-card">
         <a href="{% url 'dashboard:book_detail' book.id %}">
             {% if book.cover %}<img loading="lazy" src="{{ book.cover.url }}" alt="{{ book.title }}" class="item-cover">{% else %}<div class="item-cover-ph"><i data-lucide="book-open"></i></div>{% endif %}
@@ -62,5 +62,17 @@
     <div class="directory-empty" style="grid-column:1/-1;"><i data-lucide="book-open" class="icon-3xl icon-faded"></i><p class="mt-1">{% trans "Нет книг" %}</p></div>
     {% endfor %}
 </div>
+
+{% if page_obj_textbooks.paginator.num_pages > 1 or page_obj_books.paginator.num_pages > 1 %}
+<div class="flex justify-center gap-sm mt-3">
+    {% if page_obj_textbooks.has_previous or page_obj_books.has_previous %}
+    <a href="?page={{ page_obj_textbooks.previous_page_number }}{% if q %}&q={{ q }}{% endif %}" class="btn btn-outline btn-sm">←</a>
+    {% endif %}
+    <span class="text-muted" style="padding:0.375rem 0.5rem;">{% if page_obj_textbooks.paginator.num_pages > 1 %}{{ page_obj_textbooks.number }} / {{ page_obj_textbooks.paginator.num_pages }}{% endif %}</span>
+    {% if page_obj_textbooks.has_next or page_obj_books.has_next %}
+    <a href="?page={{ page_obj_textbooks.next_page_number }}{% if q %}&q={{ q }}{% endif %}" class="btn btn-outline btn-sm">→</a>
+    {% endif %}
+</div>
+{% endif %}
 </div>
 {% endblock %}

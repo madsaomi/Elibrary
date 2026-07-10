@@ -102,12 +102,18 @@ def check_achievements(user):
         {'code': 'bookworm_50', 'condition': {'field': 'books_returned', 'gte': 50}, 'xp_reward': 200},
     ]
 
+    codes = [a['code'] for a in achievements_to_check]
+    achievements = {a.code: a for a in Achievement.objects.filter(code__in=codes)}
+    earned = set(UserAchievement.objects.filter(
+        user=user, achievement__code__in=codes
+    ).values_list('achievement__code', flat=True))
+
     books_returned = user.book_loans.filter(status='returned').count()
     for ach_config in achievements_to_check:
-        ach = Achievement.objects.filter(code=ach_config['code']).first()
+        ach = achievements.get(ach_config['code'])
         if not ach:
             continue
-        if UserAchievement.objects.filter(user=user, achievement=ach).exists():
+        if ach_config['code'] in earned:
             continue
         cond = ach_config['condition']
         field = cond['field']

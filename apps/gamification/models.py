@@ -16,9 +16,9 @@ class XPTransaction(SchoolScopedModel, UUIDPrimaryKeyMixin, TimestampMixin, mode
         STREAK = 'streak', 'Стрик'
         ACHIEVEMENT = 'achievement', 'Достижение'
 
-    user = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='xp_transactions', verbose_name='Пользователь')
+    user = models.ForeignKey('accounts.User', on_delete=models.CASCADE, db_index=True, related_name='xp_transactions', verbose_name='Пользователь')
     amount = models.IntegerField(verbose_name='Количество XP')
-    reason = models.CharField(max_length=50, choices=Reason.choices, verbose_name='Причина')
+    reason = models.CharField(max_length=50, db_index=True, choices=Reason.choices, verbose_name='Причина')
 
     class Meta:
         verbose_name = 'XP транзакция'
@@ -68,7 +68,6 @@ class Achievement(UUIDPrimaryKeyMixin, TimestampMixin, models.Model):
     description = models.TextField(blank=True, verbose_name='Описание')
     icon_emoji = models.CharField(max_length=10, blank=True, verbose_name='Emoji')
     category = models.CharField(max_length=20, choices=Category.choices, verbose_name='Категория')
-    condition = models.JSONField(default=dict, verbose_name='Условие получения')
 
     class Meta:
         verbose_name = 'Достижение'
@@ -126,14 +125,20 @@ class Challenge(UUIDPrimaryKeyMixin, TimestampMixin, models.Model):
         verbose_name = 'Челлендж'
         verbose_name_plural = 'Челленджи'
         ordering = ('-week_start',)
+        constraints = [
+            models.UniqueConstraint(
+                fields=['school', 'grade_number', 'language', 'week_start'],
+                name='unique_challenge_per_week',
+            ),
+        ]
 
     def __str__(self):
         return f'Челлендж {self.grade_number} кл. ({self.week_start})'
 
 
 class ChallengeAttempt(UUIDPrimaryKeyMixin, TimestampMixin, models.Model):
-    challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE, related_name='attempts', verbose_name='Челлендж')
-    user = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='challenge_attempts', verbose_name='Пользователь')
+    challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE, db_index=True, related_name='attempts', verbose_name='Челлендж')
+    user = models.ForeignKey('accounts.User', on_delete=models.CASCADE, db_index=True, related_name='challenge_attempts', verbose_name='Пользователь')
     started_at = models.DateTimeField(auto_now_add=True, verbose_name='Начало')
     completed_at = models.DateTimeField(null=True, blank=True, verbose_name='Завершение')
     answers = models.JSONField(default=dict, verbose_name='Ответы')

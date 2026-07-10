@@ -96,6 +96,8 @@ def users_list(request):
     base = User.objects.select_related('grade', 'school').all()
     if request.user.role == 'school_admin':
         base = base.filter(school=request.user.school)
+    elif request.user.role == 'superadmin':
+        base = base.filter(role=User.Role.SCHOOL_ADMIN)
 
     q = request.GET.get('q', '').strip()
     role_filter = request.GET.get('role', '').strip()
@@ -185,11 +187,15 @@ def reset_password_view(request, user_id):
 
 @login_required
 def textbooks_list(request):
+    PAGE_SIZE = 50
     textbooks = Textbook.objects.all()
     q = request.GET.get('q', '').strip()
     if q:
         textbooks = textbooks.filter(Q(title__icontains=q) | Q(subject__icontains=q) | Q(author__icontains=q))
-    return render(request, 'dashboard/textbooks/list.html', {'textbooks': textbooks, 'q': q})
+    page = request.GET.get('page', 1)
+    paginator = Paginator(textbooks, PAGE_SIZE)
+    page_obj = paginator.get_page(page)
+    return render(request, 'dashboard/textbooks/list.html', {'page_obj': page_obj, 'q': q})
 
 
 @login_required
@@ -235,13 +241,17 @@ def textbook_stock_view(request):
 
 @login_required
 def books_list(request):
+    PAGE_SIZE = 50
     books = RegularBook.objects.all()
     if request.user.role == 'school_admin':
         books = books.filter(school=request.user.school)
     q = request.GET.get('q', '').strip()
     if q:
         books = books.filter(Q(title__icontains=q) | Q(author__icontains=q))
-    return render(request, 'dashboard/books/list.html', {'books': books, 'q': q})
+    page = request.GET.get('page', 1)
+    paginator = Paginator(books, PAGE_SIZE)
+    page_obj = paginator.get_page(page)
+    return render(request, 'dashboard/books/list.html', {'page_obj': page_obj, 'q': q})
 
 
 @login_required
@@ -469,8 +479,12 @@ def teacher_borrow_textbook(request):
         loans = issue_textbooks(user.school, teacher, textbook_ids, request.user, 'teacher')
         return redirect('dashboard:my_loans')
     teachers = User.objects.filter(school=user.school, role=User.Role.TEACHER) if user.role == 'school_admin' else []
+    PAGE_SIZE = 50
+    page = request.GET.get('page', 1)
+    paginator = Paginator(textbooks, PAGE_SIZE)
+    page_obj = paginator.get_page(page)
     return render(request, 'dashboard/loans/teacher_borrow.html', {
-        'textbooks': textbooks,
+        'page_obj': page_obj,
         'teachers': teachers,
         'show_all': show_all,
     })
@@ -640,8 +654,12 @@ def teacher_books_view(request):
         loans = issue_books(user.school, borrower, book_ids, request.user)
         return redirect('dashboard:my_loans')
     teachers = User.objects.filter(school=user.school, role=User.Role.TEACHER) if user.role == 'school_admin' else []
+    PAGE_SIZE = 50
+    page = request.GET.get('page', 1)
+    paginator = Paginator(books, PAGE_SIZE)
+    page_obj = paginator.get_page(page)
     return render(request, 'dashboard/loans/teacher_books.html', {
-        'books': books,
+        'page_obj': page_obj,
         'teachers': teachers,
     })
 
@@ -701,15 +719,7 @@ def import_teachers_csv(request):
 
 @login_required
 def manage_districts(request):
-    if request.user.role != 'superadmin':
-        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
-    if request.method == 'POST':
-        name = request.POST.get('name', '').strip()
-        if name:
-            District.objects.get_or_create(name=name)
-        return redirect('dashboard:manage_districts')
-    districts = District.objects.annotate(school_count=Count('schools')).order_by('name')
-    return render(request, 'dashboard/schools/districts.html', {'districts': districts})
+    return redirect('dashboard:manage_schools')
 
 
 @login_required
@@ -719,6 +729,12 @@ def manage_schools(request):
     districts = District.objects.all()
     error = None
     if request.method == 'POST':
+        action = request.POST.get('action', 'create')
+        if action == 'district':
+            name = request.POST.get('name', '').strip()
+            if name:
+                District.objects.get_or_create(name=name)
+            return redirect('dashboard:manage_schools')
         name = request.POST.get('name', '').strip()
         district_id = request.POST.get('district_id')
         if not name:
@@ -733,8 +749,8 @@ def manage_schools(request):
             else:
                 school, created = School.objects.get_or_create(name=name, district=district)
                 if created:
-                    from apps.accounts.services import generate_password as gen_pwd
-                    admin_login = f'admin.{school.id}'
+                    from apps.accounts.services import generate_password as gen_pwd, generate_login
+                    admin_login = generate_login('admin', name.replace(' ', '_').lower(), school.id)
                     admin_pwd = gen_pwd()
                     User.objects.create_user(login=admin_login, password=admin_pwd, school=school, role='school_admin')
                     from apps.core.services import generate_school_admin_excel
@@ -743,23 +759,21 @@ def manage_schools(request):
                     error = 'Школа с таким названием уже существует в этом районе'
     schools = School.objects.select_related('district').annotate(
         student_count=Count('user', filter=Q(user__role=User.Role.STUDENT)),
-    ).order_by('name')
+    ).order_by('district__name', 'name')
     return render(request, 'dashboard/schools/schools.html', {'schools': schools, 'districts': districts, 'error': error})
 
 
 @login_required
 def manage_classes(request):
-    if request.user.role not in ('superadmin', 'school_admin'):
+    if request.user.role != 'school_admin':
         return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
-    school = request.user.school if request.user.role == 'school_admin' else None
-    schools = School.objects.all() if request.user.role == 'superadmin' else []
+    school = request.user.school
     if request.method == 'POST':
         number = int(request.POST.get('number'))
         parallel = request.POST.get('parallel', '').strip()
         language = request.POST.get('language', 'ru')
         academic_year = request.POST.get('academic_year', '')
-        school_id = request.POST.get('school_id') or (school.id if school else None)
-        s = School.objects.get(id=school_id)
+        s = school
         Class.objects.get_or_create(
             number=number, parallel=parallel, language=language,
             academic_year=academic_year, school=s,
@@ -773,8 +787,6 @@ def manage_classes(request):
     students_by_class = {}
     if school:
         students_qs = User.objects.filter(school=school, role='student').select_related('grade').only('id', 'first_name', 'last_name', 'login', 'grade')
-    else:
-        students_qs = User.objects.filter(role='student').select_related('grade', 'school').only('id', 'first_name', 'last_name', 'login', 'grade', 'school')
 
     for s in students_qs:
         if s.grade_id:
@@ -811,7 +823,7 @@ def manage_classes(request):
         ).select_related('grade')
 
     return render(request, 'dashboard/schools/classes.html', {
-        'classes': classes, 'schools': schools, 'school': school,
+        'classes': classes, 'school': school,
         'students_by_class': students_by_class,
         'outgoing': outgoing, 'incoming': incoming, 'completed': completed,
         'promotions': promotions, 'current_year': current_year, 'next_year': next_year,
@@ -1000,14 +1012,20 @@ def change_password(request):
 
 @login_required
 def student_catalog(request):
+    PAGE_SIZE = 50
     textbooks = Textbook.objects.all()
     books = RegularBook.objects.filter(school=request.user.school) if request.user.school else RegularBook.objects.none()
     q = request.GET.get('q', '').strip()
     if q:
         textbooks = textbooks.filter(Q(title__icontains=q) | Q(subject__icontains=q) | Q(author__icontains=q))
         books = books.filter(Q(title__icontains=q) | Q(author__icontains=q))
+    page = request.GET.get('page', 1)
+    paginator_textbooks = Paginator(textbooks, PAGE_SIZE)
+    page_obj_textbooks = paginator_textbooks.get_page(page)
+    paginator_books = Paginator(books, PAGE_SIZE)
+    page_obj_books = paginator_books.get_page(page)
     return render(request, 'dashboard/catalog/student_catalog.html', {
-        'textbooks': textbooks, 'books': books, 'q': q,
+        'page_obj_textbooks': page_obj_textbooks, 'page_obj_books': page_obj_books, 'q': q,
         'cart_ids': request.session.get('textbook_cart_ids', []),
     })
 
@@ -1359,3 +1377,66 @@ def book_detail(request, book_id):
     if request.user.role != 'superadmin' and book.school != request.user.school:
         return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
     return render(request, 'dashboard/catalog/book_detail.html', {'book': book})
+
+
+@login_required
+def manage_admins(request):
+    if request.user.role != 'superadmin':
+        return render(request, 'dashboard/error.html', {'error': _('Доступ запрещён')})
+    from django.contrib import messages
+    from apps.accounts.services import generate_password
+
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        new_school_id = request.POST.get('new_school_id')
+        action = request.POST.get('action')
+
+        if action == 'transfer' and user_id and new_school_id:
+            admin = User.objects.filter(id=user_id, role=User.Role.SCHOOL_ADMIN).first()
+            new_school = School.objects.filter(id=new_school_id).first()
+            if admin and new_school:
+                old_school = admin.school
+                admin.school = new_school
+                admin.save()
+                ActionLog.objects.filter(user=admin, school=old_school).update(school=new_school)
+                TextbookLoan.objects.filter(issued_by=admin, school=old_school).update(school=new_school)
+                RegularBookLoan.objects.filter(issued_by=admin, school=old_school).update(school=new_school)
+                News.objects.filter(author=admin, school=old_school).update(school=new_school)
+                ActionLog.objects.create(
+                    school=new_school, user=request.user,
+                    action=ActionLog.ActionType.TRANSFER,
+                    details={'admin_id': str(admin.id), 'from_school': str(old_school.id), 'to_school': str(new_school.id)},
+                )
+                messages.success(request, _('Администратор переведён в новую школу'))
+            else:
+                messages.error(request, _('Администратор или школа не найдены'))
+        elif action == 'reset_password' and user_id:
+            admin = User.objects.filter(id=user_id, role=User.Role.SCHOOL_ADMIN).first()
+            if admin:
+                new_password = generate_password()
+                admin.set_password(new_password)
+                admin.save()
+                messages.success(request, f'Новый пароль для {admin.login}: {new_password}')
+        elif action == 'create':
+            from apps.accounts.services import generate_login, generate_password
+            school_id = request.POST.get('school_id')
+            school = School.objects.filter(id=school_id).first()
+            if school:
+                admin_login = generate_login('admin', school.name[:20].replace(' ', '_').lower(), school.id)
+                admin_pwd = generate_password()
+                admin = User.objects.create_user(
+                    login=admin_login, password=admin_pwd,
+                    school=school, role=User.Role.SCHOOL_ADMIN,
+                )
+                messages.success(request, _('Администратор создан: %(login)s / %(password)s') % {'login': admin_login, 'password': admin_pwd})
+        return redirect('dashboard:manage_admins')
+
+    schools = School.objects.select_related('district').annotate(
+        admin_count=Count('user', filter=Q(user__role=User.Role.SCHOOL_ADMIN)),
+        student_count=Count('user', filter=Q(user__role=User.Role.STUDENT)),
+    ).order_by('name')
+    admins = User.objects.filter(role=User.Role.SCHOOL_ADMIN).select_related('school__district')
+    return render(request, 'dashboard/schools/manage_admins.html', {
+        'schools': schools,
+        'admins': admins,
+    })

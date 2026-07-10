@@ -2,7 +2,7 @@
 {% load i18n %}
 {% block title %}{% trans "Челлендж" %}{% endblock %}
 {% block dashboard_content %}
-<div class="fade-in-up">
+<div class="fade-in-up" data-attempt-base-url="{% url 'challenge-attempts-list' %}">
 <div id="challengeStart" class="card text-center" style="max-width: 500px; margin: 4rem auto; padding: 3rem 2rem;">
     <div style="font-size: 4rem; margin-bottom: 1.5rem;"><i data-lucide="brain" class="icon-inline"></i></div>
     <h2 class="mb-2">{% trans "Недельный челлендж" %}</h2>
@@ -60,6 +60,7 @@
 {% block extra_scripts %}
 <script>
 const attemptId = '{{ attempt_id }}';
+const baseUrl = document.querySelector('.fade-in-up').dataset.attemptBaseUrl;
 const timeLimit = 15 * 60;
 let timeLeft = timeLimit;
 let timerInterval;
@@ -105,7 +106,7 @@ function selectAnswer(idx, answer, btn) {
 }
 
 function saveAnswer(idx, answer) {
-    fetch('/api/v1/challenge-attempts/' + attemptId + '/answer/', {
+    fetch(baseUrl + attemptId + '/answer/', {
         method: 'POST',
         headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
         body: JSON.stringify({question_idx: idx, answer: answer})
@@ -139,7 +140,7 @@ function prevQuestion() {
 
 function finishChallenge() {
     clearInterval(timerInterval);
-    fetch('/api/v1/challenge-attempts/' + attemptId + '/finish/', {
+    fetch(baseUrl + attemptId + '/finish/', {
         method: 'POST',
         headers: {'X-CSRFToken': '{{ csrf_token }}'},
     }).then(function(r) { return r.json(); }).then(function(data) {
@@ -151,7 +152,7 @@ function finishChallenge() {
 }
 
 function checkTimeout() {
-    fetch('/api/v1/challenge-attempts/' + attemptId + '/check_timeout/', {
+    fetch(baseUrl + attemptId + '/check_timeout/', {
         method: 'POST',
         headers: {'X-CSRFToken': '{{ csrf_token }}'},
     }).then(function(r) { return r.json(); }).then(function(data) {
@@ -164,7 +165,7 @@ function checkTimeout() {
 
 (function init() {
     {% if attempt_id %}/* Resume from server */
-    fetch('/api/v1/challenge-attempts/' + attemptId + '/').then(function(r) { return r.json(); }).then(function(data) {
+    fetch(baseUrl + attemptId + '/').then(function(r) { return r.json(); }).then(function(data) {
         if (data.is_completed) {
             finishChallenge();
         } else {

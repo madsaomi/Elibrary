@@ -14,8 +14,8 @@ class ActionLog(SchoolScopedModel, UUIDPrimaryKeyMixin, TimestampMixin, models.M
         PASSWORD_RESET = 'password_reset', 'Сброс пароля'
         TRANSFER = 'transfer', 'Перевод'
 
-    user = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, verbose_name='Пользователь')
-    action = models.CharField(max_length=50, choices=ActionType.choices, verbose_name='Действие')
+    user = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, db_index=True, verbose_name='Пользователь')
+    action = models.CharField(max_length=50, choices=ActionType.choices, db_index=True, verbose_name='Действие')
     details = models.JSONField(default=dict, blank=True, verbose_name='Детали')
 
     class Meta:

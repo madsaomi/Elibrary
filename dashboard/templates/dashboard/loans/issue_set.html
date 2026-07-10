@@ -8,7 +8,7 @@
     <button class="btn btn-accent" onclick="selectAllAvailable()">📗 {% trans "Выдать все доступные" %}</button>
 </div>
 <p class="text-muted mb-4" style="font-size: 0.95rem;">
-    <strong>{{ student.last_name }} {{ student.first_name }}</strong> · {{ student.grade|default:_('без класса') }}
+    <strong>{{ student.last_name }} {{ student.first_name }}</strong> · {% if student.grade %}{{ student.grade }}{% else %}{% trans "без класса" %}{% endif %}
 </p>
 <form method="post" id="issueForm">
     {% csrf_token %}

@@ -2,7 +2,7 @@
 {% load i18n %}
 {% block title %}{% trans "Главная — Библиотечная система" %}{% endblock %}
 {% block dashboard_content %}
-<div hx-get="{% url 'dashboard:home' %}" hx-trigger="every 60s" hx-select="#dashboard-main" hx-swap="outerHTML" hx-indicator="#home-skeleton">
+<div hx-get="{% url 'dashboard:home' %}" hx-trigger="every 300s" hx-select="#dashboard-main" hx-swap="outerHTML" hx-indicator="#home-skeleton">
 <div id="dashboard-main">
 <div id="home-skeleton" class="htmx-indicator">
     <div class="stats-grid mb-3">

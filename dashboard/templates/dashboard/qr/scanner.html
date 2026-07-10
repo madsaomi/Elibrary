@@ -3,7 +3,7 @@
 {% block title %}{% trans "QR-сканер — Библиотечная система" %}{% endblock %}
 {% block dashboard_content %}
 <div class="fade-in-up">
-<div class="qr-scanner-container" style="max-width: 600px; margin: 2rem auto;">
+<div class="qr-scanner-container" style="max-width: 600px; margin: 2rem auto;" data-return-url="{% url 'regularbookloan-process-return' %}" data-scan-url="{% url 'regularbookloan-scan-qr' %}">
     <div class="page-header" style="justify-content: center; text-align: center;">
         <h1 class="mb-3"><i data-lucide="scan-line" class="icon-xl icon-primary"></i> {% trans "QR-сканер" %}</h1>
     </div>
@@ -48,7 +48,8 @@ function onScanSuccess(decodedText) {
     if (html5QrCode) html5QrCode.stop();
     const token = decodedText;
     const isReturn = token.includes('"action":"return"') || token.includes("'action':'return'");
-    const endpoint = isReturn ? '/api/v1/book-loans/process_return/' : '/api/v1/book-loans/scan_qr/';
+    const container = document.querySelector('.qr-scanner-container');
+    const endpoint = isReturn ? container.dataset.returnUrl : container.dataset.scanUrl;
     fetch(endpoint, {
         method: 'POST',
         headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},

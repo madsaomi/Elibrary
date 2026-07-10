@@ -59,16 +59,20 @@ def issue_textbooks_to_class(school, class_obj, issued_by):
     students = User.objects.filter(grade=class_obj, school=school, role=User.Role.STUDENT)
     assignments = SubjectTextbook.objects.filter(school_class=class_obj).select_related('textbook')
     all_loans = []
+    stock_list = list(TextbookStock.objects.filter(
+        school=school, textbook__in=[a.textbook for a in assignments]
+    ).select_for_update())
+    stock_map = {s.textbook_id: s for s in stock_list}
+    existing_loans = set(TextbookLoan.objects.filter(
+        student__in=students, textbook__in=[a.textbook for a in assignments],
+        status=TextbookLoan.Status.ACTIVE,
+    ).values_list('student_id', 'textbook_id'))
     for student in students:
         for assignment in assignments:
-            stock = TextbookStock.objects.filter(school=school, textbook=assignment.textbook).select_for_update().first()
+            stock = stock_map.get(assignment.textbook_id)
             if not stock or stock.available_copies < 1:
                 continue
-            existing = TextbookLoan.objects.filter(
-                student=student, textbook=assignment.textbook,
-                status=TextbookLoan.Status.ACTIVE,
-            ).exists()
-            if existing:
+            if (student.id, assignment.textbook_id) in existing_loans:
                 continue
             stock.available_copies -= 1
             stock.save()

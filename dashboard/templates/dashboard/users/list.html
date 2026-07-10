@@ -1,8 +1,49 @@
 {% extends 'dashboard/base_dashboard.html' %}
 {% load i18n %}
-{% block title %}{% trans "Ученики — Библиотечная система" %}{% endblock %}
+{% block title %}{% if user.role == 'superadmin' %}{% trans "Администраторы" %}{% else %}{% trans "Ученики — Библиотечная система" %}{% endif %}{% endblock %}
 {% block dashboard_content %}
 <div class="fade-in-up">
+
+{% if user.role == 'superadmin' %}
+<div class="page-header">
+    <h1><i data-lucide="users" class="icon-xl icon-primary"></i> {% trans "Администраторы школ" %}</h1>
+    <div class="flex items-center gap-sm flex-wrap">
+        <a href="{% url 'dashboard:manage_admins' %}" class="btn btn-outline"><i data-lucide="settings" class="icon-md"></i> {% trans "Управление" %}</a>
+    </div>
+</div>
+
+<div class="card mb-3 p-2 flex items-center gap-sm flex-wrap">
+    <form method="get" class="flex items-center gap-sm" style="flex:1;">
+        <input type="search" name="q" value="{{ q }}" placeholder="{% trans 'Поиск по имени или логину...' %}" class="form-input" style="max-width:200px;">
+        <button type="submit" class="btn btn-outline btn-sm"><i data-lucide="search" class="icon-sm"></i></button>
+    </form>
+    <span class="text-muted" style="font-size:0.8125rem;">{{ stats.total }} {% trans "администраторов" %}</span>
+</div>
+
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr><th>{% trans "ФИО" %}</th><th>{% trans "Логин" %}</th><th>{% trans "Школа" %}</th><th>{% trans "Статус" %}</th></tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+            <tr>
+                <td><strong>{{ u.last_name }} {{ u.first_name }}</strong></td>
+                <td style="color:var(--color-text-muted);">{{ u.login }}</td>
+                <td>{{ u.school.name|default:"—" }}</td>
+                <td>{% if u.is_active %}<span class="badge badge-success">{% trans "Активен" %}</span>{% else %}<span class="badge badge-muted">{% trans "Неактивен" %}</span>{% endif %}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center text-muted p-3">
+                <i data-lucide="users" class="icon-2xl icon-faded mb-1"></i>
+                <p>{% trans "Нет администраторов" %}</p>
+            </td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% else %}
 
 <div class="page-header">
     <h1><i data-lucide="users" class="icon-xl icon-primary"></i> {% trans "Ученики" %}</h1>
@@ -64,6 +105,8 @@
         </tbody>
     </table>
 </div>
+
+{% endif %}
 
 {% if users.paginator.num_pages > 1 %}
 <div class="flex justify-center gap-sm mt-3">

@@ -121,7 +121,7 @@ class GamificationTest(TestCase):
         count_before = Achievement.objects.count()
         Achievement.objects.create(
             code='test_ach', name='Test', description='Test',
-            icon_emoji='🎯', category='xp', condition={'field': 'total_xp', 'gte': 100},
+            icon_emoji='🎯', category='xp',
         )
         self.assertEqual(Achievement.objects.count(), count_before + 1)
 

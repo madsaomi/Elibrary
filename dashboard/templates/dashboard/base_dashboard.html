@@ -35,13 +35,10 @@
     <a href="{% url 'dashboard:home' %}" class="sidebar-link{% if url_name == 'home' or not url_name %} active{% endif %}"><i data-lucide="layout-dashboard" class="icon"></i><span class="label">{% trans "Главная" %}</span></a>
     <div class="sidebar-group">{% trans "Управление" %}</div>
     <a href="{% url 'dashboard:superadmin' %}" class="sidebar-link{% if url_name == 'superadmin' %} active{% endif %}"><i data-lucide="bar-chart-3" class="icon"></i><span class="label">{% trans "Панель" %}</span></a>
-    <a href="{% url 'dashboard:manage_districts' %}" class="sidebar-link{% if url_name == 'manage_districts' %} active{% endif %}"><i data-lucide="map-pin" class="icon"></i><span class="label">{% trans "Районы" %}</span></a>
     <a href="{% url 'dashboard:manage_schools' %}" class="sidebar-link{% if url_name == 'manage_schools' %} active{% endif %}"><i data-lucide="school" class="icon"></i><span class="label">{% trans "Школы" %}</span></a>
-    <a href="{% url 'dashboard:users' %}" class="sidebar-link{% if url_name == 'users' %} active{% endif %}"><i data-lucide="users" class="icon"></i><span class="label">{% trans "Админы" %}</span></a>
+    <a href="{% url 'dashboard:manage_admins' %}" class="sidebar-link{% if url_name == 'manage_admins' %} active{% endif %}"><i data-lucide="users" class="icon"></i><span class="label">{% trans "Админы" %}</span></a>
     <div class="sidebar-group">{% trans "Контент" %}</div>
     <a href="{% url 'dashboard:news_list' %}" class="sidebar-link{% if url_name == 'news_list' %} active{% endif %}"><i data-lucide="newspaper" class="icon"></i><span class="label">{% trans "Новости" %}</span></a>
-    <div class="sidebar-group">{% trans "Классы" %}</div>
-    <a href="{% url 'dashboard:manage_classes' %}" class="sidebar-link{% if url_name == 'manage_classes' %} active{% endif %}"><i data-lucide="school" class="icon"></i><span class="label">{% trans "Все классы" %}</span></a>
     {% endif %}
 
     {% if user.role == 'school_admin' %}
@@ -49,8 +46,7 @@
     <a href="{% url 'dashboard:home' %}" class="sidebar-link{% if url_name == 'home' %} active{% endif %}"><i data-lucide="layout-dashboard" class="icon"></i><span class="label">{% trans "Главная" %}</span></a>
     <a href="{% url 'dashboard:inventory' %}" class="sidebar-link{% if url_name == 'inventory' %} active{% endif %}"><i data-lucide="bar-chart-3" class="icon"></i><span class="label">{% trans "Инвентаризация" %}</span></a>
     <div class="sidebar-group">{% trans "Каталог" %}</div>
-    <a href="{% url 'dashboard:textbooks' %}" class="sidebar-link{% if url_name == 'textbooks' %} active{% endif %}"><i data-lucide="book-open" class="icon"></i><span class="label">{% trans "Учебники" %}</span></a>
-    <a href="{% url 'dashboard:books' %}" class="sidebar-link{% if url_name == 'books' %} active{% endif %}"><i data-lucide="book-marked" class="icon"></i><span class="label">{% trans "Книги" %}</span></a>
+    <a href="{% url 'dashboard:student_catalog' %}" class="sidebar-link{% if url_name == 'student_catalog' %} active{% endif %}"><i data-lucide="book-open" class="icon"></i><span class="label">{% trans "Каталог" %}</span></a>
     <a href="{% url 'dashboard:manage_subject_textbooks' %}" class="sidebar-link{% if url_name == 'manage_subject_textbooks' %} active{% endif %}"><i data-lucide="list" class="icon"></i><span class="label">{% trans "Предметы" %}</span></a>
     <div class="sidebar-group">{% trans "Читатели" %}</div>
     <a href="{% url 'dashboard:users' %}" class="sidebar-link{% if url_name == 'users' %} active{% endif %}"><i data-lucide="users" class="icon"></i><span class="label">{% trans "Ученики" %}</span></a>
@@ -105,7 +101,7 @@
 {% if user.role == 'student' or user.role == 'teacher' %}
 <a href="{% url 'dashboard:textbook_cart' %}" class="cart-float" id="cartFloat">
     <i data-lucide="shopping-cart" class="icon-lg"></i>
-    <span class="cart-float-badge" hx-get="{% url 'dashboard:cart_counter' %}" hx-trigger="every 5s" hx-swap="innerHTML">0</span>
+    <span class="cart-float-badge" hx-get="{% url 'dashboard:cart_counter' %}" hx-trigger="every 30s" hx-swap="innerHTML">0</span>
 </a>
 {% endif %}
 
@@ -115,10 +111,10 @@
         {% if user.role == 'superadmin' %}
         <a href="{% url 'dashboard:home' %}" class="tab-link{% if url_name == 'home' or not url_name %} active{% endif %}"><i data-lucide="home" class="icon"></i>{% trans "Главная" %}</a>
         <a href="{% url 'dashboard:superadmin' %}" class="tab-link{% if url_name == 'superadmin' %} active{% endif %}"><i data-lucide="bar-chart-3" class="icon"></i>{% trans "Панель" %}</a>
-        <a href="{% url 'dashboard:manage_schools' %}" class="tab-link{% if url_name == 'manage_schools' %} active{% endif %}"><i data-lucide="school" class="icon"></i>{% trans "Школы" %}</a>
+        <a href="{% url 'dashboard:manage_admins' %}" class="tab-link{% if url_name == 'manage_admins' %} active{% endif %}"><i data-lucide="users" class="icon"></i>{% trans "Админы" %}</a>
         {% elif user.role == 'school_admin' %}
         <a href="{% url 'dashboard:home' %}" class="tab-link{% if url_name == 'home' %} active{% endif %}"><i data-lucide="home" class="icon"></i>{% trans "Главная" %}</a>
-        <a href="{% url 'dashboard:textbooks' %}" class="tab-link{% if url_name == 'textbooks' %} active{% endif %}"><i data-lucide="book-open" class="icon"></i>{% trans "Каталог" %}</a>
+        <a href="{% url 'dashboard:student_catalog' %}" class="tab-link{% if url_name == 'student_catalog' %} active{% endif %}"><i data-lucide="book-open" class="icon"></i>{% trans "Каталог" %}</a>
         <a href="{% url 'dashboard:manage_classes' %}" class="tab-link{% if url_name == 'manage_classes' %} active{% endif %}"><i data-lucide="school" class="icon"></i>{% trans "Классы" %}</a>
         {% elif user.role == 'teacher' %}
         <a href="{% url 'dashboard:home' %}" class="tab-link{% if url_name == 'home' %} active{% endif %}"><i data-lucide="home" class="icon"></i>{% trans "Главная" %}</a>

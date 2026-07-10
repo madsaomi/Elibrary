@@ -18,9 +18,9 @@ class TextbookLoan(SchoolScopedModel, UUIDPrimaryKeyMixin, TimestampMixin, model
         OVERDUE = 'overdue', 'Просрочен'
         FORCED = 'forced', 'Принудительный возврат'
 
-    textbook = models.ForeignKey(Textbook, on_delete=models.CASCADE, related_name='loans', verbose_name='Учебник')
+    textbook = models.ForeignKey(Textbook, on_delete=models.CASCADE, db_index=True, related_name='loans', verbose_name='Учебник')
     student = models.ForeignKey(
-        'accounts.User', on_delete=models.CASCADE, related_name='textbook_loans', verbose_name='Ученик',
+        'accounts.User', on_delete=models.CASCADE, db_index=True, related_name='textbook_loans', verbose_name='Ученик',
     )
     borrower_type = models.CharField(
         max_length=10, choices=[('student', 'Ученик'), ('teacher', 'Учитель')],
@@ -30,9 +30,9 @@ class TextbookLoan(SchoolScopedModel, UUIDPrimaryKeyMixin, TimestampMixin, model
         'accounts.User', on_delete=models.SET_NULL, null=True, related_name='issued_textbooks', verbose_name='Выдал',
     )
     issued_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата выдачи')
-    due_date = models.DateField(verbose_name='Срок возврата')
+    due_date = models.DateField(db_index=True, verbose_name='Срок возврата')
     returned_at = models.DateTimeField(null=True, blank=True, verbose_name='Дата возврата')
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE, verbose_name='Статус')
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE, db_index=True, verbose_name='Статус')
 
     class Meta:
         verbose_name = 'Выдача учебника'
@@ -49,9 +49,9 @@ class RegularBookLoan(SchoolScopedModel, UUIDPrimaryKeyMixin, TimestampMixin, mo
         RETURNED = 'returned', 'Возвращена'
         FORCED = 'forced', 'Принудительный возврат'
 
-    book = models.ForeignKey(RegularBook, on_delete=models.CASCADE, related_name='loans', verbose_name='Книга')
+    book = models.ForeignKey(RegularBook, on_delete=models.CASCADE, db_index=True, related_name='loans', verbose_name='Книга')
     user = models.ForeignKey(
-        'accounts.User', on_delete=models.CASCADE, related_name='book_loans', verbose_name='Пользователь',
+        'accounts.User', on_delete=models.CASCADE, db_index=True, related_name='book_loans', verbose_name='Пользователь',
     )
     issued_by = models.ForeignKey(
         'accounts.User', on_delete=models.SET_NULL, null=True, related_name='issued_books', verbose_name='Выдал',
@@ -59,7 +59,7 @@ class RegularBookLoan(SchoolScopedModel, UUIDPrimaryKeyMixin, TimestampMixin, mo
     issued_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата выдачи')
     due_date = models.DateField(default=_default_due_date, verbose_name='Срок возврата')
     returned_at = models.DateTimeField(null=True, blank=True, verbose_name='Дата возврата')
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE, verbose_name='Статус')
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE, db_index=True, verbose_name='Статус')
     qr_token = models.CharField(max_length=500, blank=True, verbose_name='QR-токен')
 
     class Meta:

@@ -15,12 +15,13 @@ class User(AbstractUser):
     email = None
 
     login = models.CharField(max_length=150, unique=True, null=True, blank=True, verbose_name='Логин')
-    role = models.CharField(max_length=20, choices=Role.choices, default=Role.STUDENT, verbose_name='Роль')
+    role = models.CharField(max_length=20, choices=Role.choices, default=Role.STUDENT, db_index=True, verbose_name='Роль')
     school = models.ForeignKey(
         'schools.School',
         on_delete=models.CASCADE,
         null=True,
         blank=True,
+        db_index=True,
         verbose_name='Школа',
     )
     subject = models.CharField(max_length=100, blank=True, verbose_name='Предмет')

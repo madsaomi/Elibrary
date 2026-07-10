@@ -5,8 +5,11 @@ from decouple import config, Csv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-dev-key-change-in-production')
+SECRET_KEY = config('DJANGO_SECRET_KEY', default='dev-only-insecure-key')
 DEBUG = config('DJANGO_DEBUG', default=True, cast=bool)
+
+if not DEBUG and SECRET_KEY == 'dev-only-insecure-key':
+    raise RuntimeError("DJANGO_SECRET_KEY must be set when DEBUG=False")
 ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 
 INSTALLED_APPS = [
@@ -160,7 +163,7 @@ SPECTACULAR_SETTINGS = {
     'TITLE': 'Elibrary API',
     'DESCRIPTION': 'API для школьной библиотечной системы',
     'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
+    'SERVE_INCLUDE_SCHEMA': True,
 }
 
 # --- SimpleJWT ---
@@ -179,7 +182,7 @@ AUTHENTICATION_BACKENDS = [
 
 # --- Axes ---
 TESTING = 'test' in sys.argv
-AXES_ENABLED = not DEBUG and not TESTING
+AXES_ENABLED = config('AXES_ENABLED', default=not DEBUG and not TESTING, cast=bool)
 AXES_FAILURE_LIMIT = 5
 AXES_COOLOFF_TIME = 1
 AXES_RESET_ON_SUCCESS = True
@@ -187,7 +190,7 @@ AXES_LOCKOUT_PARAMETERS = ['username', 'ip_address']
 AXES_USERNAME_FIELD = 'login'
 
 # --- CORS ---
-CORS_ALLOW_ALL_ORIGINS = DEBUG
+CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=DEBUG, cast=bool)
 CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='', cast=Csv())
 
 # --- Channels ---
@@ -216,8 +219,13 @@ CACHES = {
     }
 }
 
-# --- Email (dev) ---
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# --- Email ---
+EMAIL_BACKEND = config('DJANGO_EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = config('DJANGO_EMAIL_HOST', default='')
+EMAIL_PORT = config('DJANGO_EMAIL_PORT', default=587, cast=int)
+EMAIL_HOST_USER = config('DJANGO_EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('DJANGO_EMAIL_HOST_PASSWORD', default='')
+EMAIL_USE_TLS = config('DJANGO_EMAIL_USE_TLS', default=True, cast=bool)
 
 LOGIN_URL = '/auth/login/'
 LOGIN_REDIRECT_URL = '/'
@@ -225,14 +233,13 @@ LOGOUT_REDIRECT_URL = '/auth/login/'
 
 # --- Security ---
 SESSION_COOKIE_HTTPONLY = True
-CSRF_COOKIE_HTTPONLY = True
-if not DEBUG:
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = 31536000
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+CSRF_COOKIE_HTTPONLY = config('CSRF_COOKIE_HTTPONLY', default=False, cast=bool)
+SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=not DEBUG, cast=bool)
+CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=not DEBUG, cast=bool)
+SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=31536000 if not DEBUG else 0, cast=int)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = config('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=not DEBUG, cast=bool)
+SECURE_HSTS_PRELOAD = config('SECURE_HSTS_PRELOAD', default=not DEBUG, cast=bool)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # --- AI (Gemini) ---
 GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
