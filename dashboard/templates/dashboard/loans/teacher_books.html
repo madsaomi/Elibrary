@@ -20,15 +20,19 @@
         {% endif %}
         <div class="mb-2">
             <label class="form-label">{% trans "Книги" %}</label>
-            <div class="overflow-auto" style="max-height: 300px; border: 1px solid var(--border); border-radius: var(--radius); padding: 0.5rem;">
+            <div class="book-list">
                 {% for book in page_obj %}
-                <label class="flex items-center gap-sm p-1" style="font-size: 0.875rem;">
+                <label class="book-list-label">
                     <input type="checkbox" name="book_ids" value="{{ book.id }}">
                     {{ book.title }} ({{ book.author }})
                     <span class="badge badge-info">{{ book.available_copies }}/{{ book.total_copies }}</span>
                 </label>
                 {% empty %}
-                <div class="empty-state" style="padding: 2rem;"><div class="icon" style="font-size: 2rem;"><i data-lucide="book-marked" class="icon-inline"></i></div><h3>{% trans "Нет книг" %}</h3><p>{% trans "В библиотеке пока нет книг." %}</p></div>
+                <div class="book-list-empty">
+                    <div class="icon"><i data-lucide="book-marked" class="icon-inline"></i></div>
+                    <h3>{% trans "Нет книг" %}</h3>
+                    <p>{% trans "В библиотеке пока нет книг." %}</p>
+                </div>
                 {% endfor %}
             </div>
         </div>
@@ -38,7 +42,7 @@
             {% if page_obj.has_previous %}
             <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-outline btn-sm">←</a>
             {% endif %}
-            <span class="text-muted" style="padding:0.375rem 0.5rem;">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+            <span class="text-muted px-1 py-05">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
             {% if page_obj.has_next %}
             <a href="?page={{ page_obj.next_page_number }}" class="btn btn-outline btn-sm">→</a>
             {% endif %}

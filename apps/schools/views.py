@@ -9,18 +9,8 @@ from apps.schools.serializers import (
     InitiateTransferSerializer, AcceptTransferSerializer,
 )
 from apps.schools.transfer_service import initiate_departure, complete_departure, accept_transfer, cancel_transfer
-from api.v1.permissions import IsSuperAdmin, IsSchoolAdminOrSuperAdmin, IsSchoolAdmin, IsOwnerOrSchoolAdmin
+from api.v1.permissions import IsSuperAdmin, IsSchoolAdminOrSuperAdmin, IsOwnerOrSchoolAdmin
 from apps.accounts.models import User
-
-
-class IsSuperAdmin(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == 'superadmin'
-
-
-class IsSchoolAdmin(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role in ('superadmin', 'school_admin')
 
 
 class DistrictViewSet(viewsets.ModelViewSet):
@@ -38,7 +28,7 @@ class SchoolViewSet(viewsets.ModelViewSet):
 class ClassViewSet(viewsets.ModelViewSet):
     queryset = Class.objects.all()
     serializer_class = ClassSerializer
-    permission_classes = [IsSchoolAdmin]
+    permission_classes = [IsSchoolAdminOrSuperAdmin]
 
     def get_queryset(self):
         qs = Class.objects.all()
@@ -50,7 +40,7 @@ class ClassViewSet(viewsets.ModelViewSet):
 class TransferViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = TransferLog.objects.all()
     serializer_class = TransferLogSerializer
-    permission_classes = [IsSchoolAdmin]
+    permission_classes = [IsSchoolAdminOrSuperAdmin]
 
     def get_queryset(self):
         qs = TransferLog.objects.all()

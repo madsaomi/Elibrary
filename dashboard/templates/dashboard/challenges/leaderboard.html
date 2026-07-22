@@ -9,21 +9,21 @@
 <div class="flex gap-md flex-wrap mb-4">
     {% for c in challenges %}
     <a href="?challenge_id={{ c.id }}" class="btn btn-{% if selected and selected.id == c.id %}primary{% else %}outline{% endif %}">
-        {% blocktranslate %}{{ c.grade_number }} кл.{% endblocktranslate %} <span style="font-weight: normal; opacity: 0.8;">({{ c.week_start|date:'d.m.Y' }})</span>
+        {% blocktranslate %}{{ c.grade_number }} кл.{% endblocktranslate %} <span class="font-normal opacity-80">({{ c.week_start|date:'d.m.Y' }})</span>
     </a>
     {% empty %}
     <div class="empty-state">
         <div class="mb-3">
-            <img src="{% static 'images/illustrations/empty_box.png' %}" alt="No Challenges" class="animate-float" style="max-width: 100%; height: auto; max-height: 200px; object-fit: contain;">
+            <img src="{% static 'images/illustrations/empty_box.png' %}" alt="No Challenges" class="animate-float">
         </div>
-        <h3 style="font-family: var(--font-display); font-size: 1.5rem;">{% trans "Нет опубликованных челленджей" %}</h3>
+        <h3 class="text-11">{% trans "Нет опубликованных челленджей" %}</h3>
         <p>{% trans "Челленджи появляются каждый понедельник." %}</p>
     </div>
     {% endfor %}
 </div>
 {% if selected %}
 <h2 class="mb-2">
-    {% blocktranslate %}{{ selected.grade_number }} класс{% endblocktranslate %} <span class="text-muted" style="font-size: 1rem; font-weight: normal;">— {{ selected.week_start|date:'d.m.Y' }}</span>
+    {% blocktranslate %}{{ selected.grade_number }} класс{% endblocktranslate %} <span class="text-muted text-1 font-normal">— {{ selected.week_start|date:'d.m.Y' }}</span>
 </h2>
 {% if grade_numbers|length > 1 %}
 <div class="flex gap-sm mb-4 flex-wrap">
@@ -43,14 +43,14 @@
                 <td><strong>{{ forloop.counter }}</strong></td>
                 <td><strong>{{ a.user.last_name }} {{ a.user.first_name|first }}.</strong></td>
                 <td>{{ a.user.grade|default:'-' }}</td>
-                <td class="text-right"><strong class="nums" style="color: var(--color-primary);">{{ a.score }}</strong></td>
+                <td class="text-right"><strong class="nums color-primary">{{ a.score }}</strong></td>
                 <td>
                     <div class="flex gap-xs">
                         {% with achievements=a.user.achievements.all|dictsortreversed:"awarded_at" %}
                         {% for ua in achievements|slice:":3" %}
-                        <span class="achievement" style="width: 32px; height: 32px; font-size: 1rem; line-height: 32px;" title="{{ ua.achievement.name }}">{{ ua.achievement.icon_emoji }}</span>
+                        <span class="achievement achievement-sm" title="{{ ua.achievement.name }}">{{ ua.achievement.icon_emoji }}</span>
                         {% empty %}
-                        <span class="text-muted" style="font-size: 0.75rem;">—</span>
+                        <span class="text-muted text-075">—</span>
                         {% endfor %}
                         {% endwith %}
                     </div>
@@ -64,14 +64,14 @@
                 <td><strong>{{ user_rank }}</strong></td>
                 <td><strong>{{ user_attempt.user.last_name }} {{ user_attempt.user.first_name|first }}.</strong></td>
                 <td>{{ user_attempt.user.grade|default:'-' }}</td>
-                <td class="text-right"><strong class="nums" style="color: var(--color-primary);">{{ user_attempt.score }}</strong></td>
+                <td class="text-right"><strong class="nums color-primary">{{ user_attempt.score }}</strong></td>
                 <td>
                     <div class="flex gap-xs">
                         {% with achievements=user_attempt.user.achievements.all|dictsortreversed:"awarded_at" %}
                         {% for ua in achievements|slice:":3" %}
-                        <span class="achievement" style="width: 32px; height: 32px; font-size: 1rem; line-height: 32px;" title="{{ ua.achievement.name }}">{{ ua.achievement.icon_emoji }}</span>
+                        <span class="achievement achievement-sm" title="{{ ua.achievement.name }}">{{ ua.achievement.icon_emoji }}</span>
                         {% empty %}
-                        <span class="text-muted" style="font-size: 0.75rem;">—</span>
+                        <span class="text-muted text-075">—</span>
                         {% endfor %}
                         {% endwith %}
                     </div>

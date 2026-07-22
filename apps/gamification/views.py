@@ -128,6 +128,8 @@ class ChallengeAttemptViewSet(viewsets.ModelViewSet):
             challenge = Challenge.objects.get(id=challenge_id)
         except Challenge.DoesNotExist:
             return Response({'error': _('Челлендж не найден')}, status=status.HTTP_404_NOT_FOUND)
+        if challenge.school and challenge.school != request.user.school:
+            return Response({'error': _('Челлендж принадлежит другой школе')}, status=status.HTTP_403_FORBIDDEN)
         if challenge.status != Challenge.Status.PUBLISHED:
             return Response({'error': _('Челлендж ещё не опубликован')}, status=status.HTTP_400_BAD_REQUEST)
         if len(challenge.questions) != 15:

@@ -9,7 +9,7 @@
         <div class="mb-1"><label class="form-label">{% trans "Название" %}</label><input name="title" class="form-input" required></div>
         <div class="mb-1"><label class="form-label">{% trans "Автор" %}</label><input name="author" class="form-input"></div>
         <div class="mb-1"><label class="form-label">{% trans "Категория" %}</label><select name="category_id" class="form-input"><option value="">{% trans "— без категории —" %}</option>{% for cat in categories %}<option value="{{ cat.id }}">{{ cat.name }}</option>{% endfor %}</select></div>
-        <div class="mb-1"><label class="form-label">{% trans "Количество экземпляров" %}</label><input name="total_copies" type="number" min="1" value="1" class="form-input" style="width:100px"></div>
+        <div class="mb-1"><label class="form-label">{% trans "Количество экземпляров" %}</label><input name="total_copies" type="number" min="1" value="1" class="form-input w-100"></div>
         <div class="mb-1"><label class="form-label">{% trans "Обложка" %}</label><input name="cover" type="file" class="form-input" accept="image/*"></div>
         <button class="btn btn-primary mt-1" type="submit">{% trans "Создать" %}</button>
     </form>

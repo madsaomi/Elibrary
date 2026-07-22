@@ -23,9 +23,9 @@
     {% empty %}
     <div class="empty-state">
         <div class="mb-3">
-            <img src="{% static 'images/illustrations/empty_box.png' %}" alt="No News" class="animate-float" style="max-width: 100%; height: auto; max-height: 200px; object-fit: contain;">
+            <img src="{% static 'images/illustrations/empty_box.png' %}" alt="No News" class="animate-float">
         </div>
-        <h3 style="font-family: var(--font-display); font-size: 1.5rem;">{% trans "Нет новостей" %}</h3>
+        <h3 class="text-15">{% trans "Нет новостей" %}</h3>
         <p>{% trans "Новости вашей школы будут появляться здесь." %}</p>
     </div>
     {% endfor %}

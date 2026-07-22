@@ -10,12 +10,12 @@
             {% blocktranslate %}Отметьте книги, которые хотите вернуть. Будет сгенерирован QR-код для библиотекаря.{% endblocktranslate %}
         </p>
         {% for loan in book_loans %}
-        <label class="flex items-center gap-sm p-1 border-bottom" style="font-size: 0.875rem;">
+        <label class="flex items-center gap-sm p-1 border-bottom text-09">
             <input type="checkbox" name="loan_ids" value="{{ loan.id }}">
             {{ loan.book.title }} — {{ loan.issued_at|date:'d.m.Y' }}
         </label>
         {% empty %}
-        <div class="empty-state" style="padding: 1.5rem;"><div class="icon" style="font-size: 2rem;"><i data-lucide="book" class="icon-3xl"></i></div><h3>{% trans "Нет книг для возврата" %}</h3><p>{% trans "У вас нет активных выдач книг." %}</p></div>
+        <div class="empty-state p-15"><div class="icon text-2xl"><i data-lucide="book" class="icon-3xl"></i></div><h3>{% trans "Нет книг для возврата" %}</h3><p>{% trans "У вас нет активных выдач книг." %}</p></div>
         {% endfor %}
         {% if book_loans %}
         <button type="submit" class="btn btn-primary mt-2"><i data-lucide="smartphone" class="icon-inline"></i> {% trans "Сгенерировать QR для возврата" %}</button>

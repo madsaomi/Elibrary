@@ -4,7 +4,7 @@
 {% block dashboard_content %}
 <div class="fade-in-up">
 <div class="page-header">
-    <h1><i data-lucide="shopping-cart" class="icon-xl icon-primary"></i> {% trans "Корзина" %} <span class="badge badge-info" style="font-size: 1.25rem;">{{ books|length }}</span></h1>
+    <h1><i data-lucide="shopping-cart" class="icon-xl icon-primary"></i> {% trans "Корзина" %} <span class="badge badge-info text-125">{{ books|length }}</span></h1>
 </div>
 <div class="card max-w-600 mb-4">
     {% if books %}
@@ -40,9 +40,9 @@
     {% else %}
     <div class="text-center p-4">
         <div class="mb-4">
-            <img src="{% static 'images/illustrations/empty_box.png' %}" alt="Empty Cart" class="animate-float" style="max-width: 100%; height: auto; max-height: 200px; object-fit: contain;">
+            <img src="{% static 'images/illustrations/empty_box.png' %}" alt="Empty Cart" class="animate-float">
         </div>
-        <h3 class="mb-1" style="font-family: var(--font-display); font-size: 1.5rem;">{% trans "Корзина пуста" %}</h3>
+        <h3 class="mb-1 text-15">{% trans "Корзина пуста" %}</h3>
         <p class="text-muted mb-3">{% trans "Добавьте книги из каталога." %}</p>
         <a href="{% url 'dashboard:student_catalog' %}" class="btn btn-primary"><i data-lucide="book-open" class="icon-inline"></i> {% trans "Перейти в каталог" %}</a>
     </div>

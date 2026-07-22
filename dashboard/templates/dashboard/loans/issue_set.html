@@ -7,7 +7,7 @@
     <h1><i data-lucide="book-open" class="icon-inline"></i> {% blocktranslate %}Выдача учебников — {{ student.last_name }} {{ student.first_name }}{% endblocktranslate %}</h1>
     <button class="btn btn-accent" onclick="selectAllAvailable()">📗 {% trans "Выдать все доступные" %}</button>
 </div>
-<p class="text-muted mb-4" style="font-size: 0.95rem;">
+<p class="text-muted mb-4 text-095">
     <strong>{{ student.last_name }} {{ student.first_name }}</strong> · {% if student.grade %}{{ student.grade }}{% else %}{% trans "без класса" %}{% endif %}
 </p>
 <form method="post" id="issueForm">

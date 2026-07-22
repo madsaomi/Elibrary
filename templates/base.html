@@ -8,8 +8,6 @@
     <title>{% block title %}{% trans "Библиотечная система" %}{% endblock %}</title>
     <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.3/index.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/manrope@5.0.3/index.min.css">
     <script src="https://unpkg.com/htmx.org@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
@@ -22,7 +20,7 @@
         var border = css.getPropertyValue('--color-border').trim() || '#e2e8f0';
         Chart.defaults.color = text;
         Chart.defaults.borderColor = border;
-        Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+        Chart.defaults.font.family = "system-ui, -apple-system, 'Segoe UI', sans-serif";
         Chart.defaults.plugins.legend.labels.color = text;
       })();
     </script>

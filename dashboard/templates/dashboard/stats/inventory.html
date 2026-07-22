@@ -8,27 +8,27 @@
 <div class="stats-grid mb-4">
     <div class="card-stat">
         <div class="icon"><i data-lucide="library" class="icon-xl"></i></div>
-        <div class="value" style="font-family: var(--font-display);">{{ stats.regular_books.total|default:0 }}</div>
+        <div class="value">{{ stats.regular_books.total|default:0 }}</div>
         <div class="label">{% trans "Книг всего" %}</div>
     </div>
     <div class="card-stat">
         <div class="icon"><i data-lucide="book-open" class="icon-xl"></i></div>
-        <div class="value" style="font-family: var(--font-display);">{{ stats.textbook_stocks.total|default:0 }}</div>
+        <div class="value">{{ stats.textbook_stocks.total|default:0 }}</div>
         <div class="label">{% trans "Учебников всего" %}</div>
     </div>
     <div class="card-stat">
         <div class="icon"><i data-lucide="graduation-cap" class="icon-xl"></i></div>
-        <div class="value" style="font-family: var(--font-display);">{{ stats.active_loans|default:0 }}</div>
+        <div class="value">{{ stats.active_loans|default:0 }}</div>
         <div class="label">{% trans "Активных читателей" %}</div>
     </div>
 </div>
 {% endif %}
 
 <div class="card mb-4">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem;">
+    <div class="card-section-header">
         <h2 class="mb-0">{% trans "Просроченные выдачи" %}</h2>
         <div class="flex items-center gap-sm flex-wrap">
-            <select class="form-select" id="debtorFilter" style="width: auto;" onchange="filterDebtors()">
+            <select class="form-select w-auto" id="debtorFilter" onchange="filterDebtors()">
                 <option value="all">{% trans "Все должники" %}</option>
                 <option value="overdue">{% trans "Просрочено" %}</option>
                 <option value="due-soon">{% trans "Скоро срок" %}</option>
@@ -61,11 +61,11 @@
 <div class="grid-2 mb-4">
     <div class="card">
         <h3>{% trans "Динамика по месяцам" %}</h3>
-        <canvas id="monthlyChart" style="max-height: 250px;"></canvas>
+        <canvas id="monthlyChart" class="chart-canvas"></canvas>
     </div>
     <div class="card">
         <h3>{% trans "Распределение по категориям" %}</h3>
-        <canvas id="categoryChart" style="max-height: 250px;"></canvas>
+        <canvas id="categoryChart" class="chart-canvas"></canvas>
     </div>
 </div>
 {% endblock %}

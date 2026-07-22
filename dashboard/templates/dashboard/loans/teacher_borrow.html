@@ -21,7 +21,7 @@
         {% if user.role == 'teacher' and user.subject %}
         <div class="flex items-center gap-sm mb-15">
             <span class="badge badge-info">{% trans "Фильтр" %}: {{ user.subject }}</span>
-            <label style="font-size: 0.875rem;" class="flex items-center gap-xs">
+            <label class="book-list-label">
                 <input type="checkbox" name="show_all" value="1" onchange="this.form.submit()">
                 {% trans "Показать все предметы" %}
             </label>
@@ -29,14 +29,18 @@
         {% endif %}
         <div class="mb-2">
             <label class="form-label">{% trans "Учебники (на 7 дней)" %}</label>
-            <div class="overflow-auto" style="max-height: 300px; border: 1px solid var(--border); border-radius: var(--radius); padding: 0.5rem;">
+            <div class="book-list">
                 {% for tb in page_obj %}
-                <label class="flex items-center gap-sm p-1" style="font-size: 0.875rem;">
+                <label class="book-list-label">
                     <input type="checkbox" name="textbook_ids" value="{{ tb.id }}">
                     {{ tb.title }} ({{ tb.subject }}, {{ tb.grade_number }} {% trans "кл." %})
                 </label>
                 {% empty %}
-                <div class="empty-state" style="padding: 2rem;"><div class="icon" style="font-size: 2rem;"><i data-lucide="book-open" class="icon-inline"></i></div><h3>{% trans "Нет учебников" %}</h3><p>{% trans "По вашему предмету пока нет учебников." %}</p></div>
+                <div class="book-list-empty">
+                    <div class="icon"><i data-lucide="book-open" class="icon-inline"></i></div>
+                    <h3>{% trans "Нет учебников" %}</h3>
+                    <p>{% trans "По вашему предмету пока нет учебников." %}</p>
+                </div>
                 {% endfor %}
             </div>
         </div>
@@ -47,7 +51,7 @@
         {% if page_obj.has_previous %}
         <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-outline btn-sm">←</a>
         {% endif %}
-        <span class="text-muted" style="padding:0.375rem 0.5rem;">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        <span class="text-muted px-1 py-05">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
         {% if page_obj.has_next %}
         <a href="?page={{ page_obj.next_page_number }}" class="btn btn-outline btn-sm">→</a>
         {% endif %}

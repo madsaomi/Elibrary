@@ -3,7 +3,7 @@
 {% block title %}{% trans "Ошибка" %}{% endblock %}
 {% block dashboard_content %}
 <div class="text-center p-5">
-    <h1 style="font-size: 3rem; margin-bottom: 1rem;"><i data-lucide="alert-triangle" class="icon-inline"></i></h1>
+    <h1 class="text-hero mb-2"><i data-lucide="alert-triangle" class="icon-inline"></i></h1>
     {% trans "Произошла ошибка" as err_default %}
     {% trans "Попробуйте ещё раз или обратитесь к администратору." as detail_default %}
     <h2 class="mb-2">{{ error|default:err_default }}</h2>

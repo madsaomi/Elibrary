@@ -22,22 +22,11 @@
         </div>
     </a>
     {% empty %}
-    <div class="directory-empty" style="grid-column:1/-1;">
+    <div class="directory-empty col-span-full">
         <i data-lucide="book" class="icon-3xl icon-faded"></i>
         <p class="mt-1">{% trans "Нет учебников" %}</p>
     </div>
     {% endfor %}
 </div>
-
-{% if page_obj.paginator.num_pages > 1 %}
-<div class="flex justify-center gap-sm mt-3">
-    {% if page_obj.has_previous %}
-    <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}" class="btn btn-outline btn-sm">←</a>
-    {% endif %}
-    <span class="text-muted" style="padding:0.375rem 0.5rem;">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
-    {% if page_obj.has_next %}
-    <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}" class="btn btn-outline btn-sm">→</a>
-    {% endif %}
-</div>
-{% endif %}
+{% include 'dashboard/_pagination.html' %}
 {% endblock %}

@@ -103,8 +103,9 @@ class LoanModelTest(TestCase):
 
     def test_textbook_loan(self):
         from apps.loans.services import issue_textbooks, return_textbooks
-        loans = issue_textbooks(self.school, self.student, [self.textbook.id], self.student)
+        loans, skipped = issue_textbooks(self.school, self.student, [self.textbook.id], self.student)
         self.assertEqual(len(loans), 1)
+        self.assertEqual(len(skipped), 0)
         self.assertEqual(loans[0].status, 'active')
         self.stock.refresh_from_db()
         self.assertEqual(self.stock.available_copies, 4)
@@ -165,3 +166,88 @@ class GamificationTest(TestCase):
 
         add_xp(student, 500, 'test')
         self.assertFalse(UserLevel.objects.filter(user=student).exists())
+
+
+class NotificationTest(TestCase):
+    def setUp(self):
+        self.district = District.objects.create(name='Test District')
+        self.school = School.objects.create(name='Test School', district=self.district)
+        self.admin, _ = create_user(
+            role=User.Role.SCHOOL_ADMIN, first_name='Admin', last_name='User',
+            school=self.school,
+        )
+        self.student, _ = create_user(
+            role=User.Role.STUDENT, first_name='Student', last_name='User',
+            school=self.school,
+        )
+
+    def test_news_visible_to_school_admin(self):
+        from apps.notifications.models import News
+        from apps.notifications.services import NewsService
+        school_news = News.objects.create(
+            title='School News', content='Content',
+            author=self.admin, author_level='school_admin',
+            school=self.school, is_published=True,
+        )
+        global_news = News.objects.create(
+            title='Global News', content='Content',
+            author=self.admin, author_level='superadmin',
+            school=None, is_published=True,
+        )
+        visible = NewsService.visible_to(self.admin)
+        self.assertIn(school_news, visible)
+        self.assertIn(global_news, visible)
+
+    def test_news_not_visible_to_other_school(self):
+        from apps.notifications.models import News
+        from apps.notifications.services import NewsService
+        other_school = School.objects.create(name='Other School', district=self.district)
+        other_admin, _ = create_user(
+            role=User.Role.SCHOOL_ADMIN, first_name='Other', last_name='Admin',
+            school=other_school,
+        )
+        school_news = News.objects.create(
+            title='School News', content='Content',
+            author=self.admin, author_level='school_admin',
+            school=self.school, is_published=True,
+        )
+        visible = NewsService.visible_to(other_admin)
+        self.assertNotIn(school_news, visible)
+
+
+class ComebackBonusTest(TestCase):
+    def setUp(self):
+        self.district = District.objects.create(name='Test District')
+        self.school = School.objects.create(name='Test School', district=self.district)
+        self.student, _ = create_user(
+            role=User.Role.STUDENT, first_name='Student', last_name='User',
+            school=self.school,
+        )
+        self.student.is_active_for_gamification = True
+        self.student.save()
+
+    def test_comeback_bonus_awarded(self):
+        from apps.gamification.services import award_comeback_bonus
+        from apps.gamification.models import XPTransaction
+        from apps.loans.models import TextbookLoan, Textbook
+        textbook = Textbook.objects.create(
+            title='Test', subject='Test', grade_number=5,
+            language='ru', academic_year='2025-2026',
+        )
+        TextbookLoan.objects.create(
+            textbook=textbook, student=self.student,
+            issued_by=self.student, due_date='2025-01-01',
+            status=TextbookLoan.Status.OVERDUE, school=self.school,
+        )
+        XPTransaction.objects.create(
+            user=self.student, amount=10,
+            reason=XPTransaction.Reason.RETURN_LATE, school=self.school,
+        )
+        tx = award_comeback_bonus(self.student)
+        self.assertIsNotNone(tx)
+        self.assertEqual(tx.amount, 30)
+
+    def test_comeback_bonus_not_without_late(self):
+        from apps.gamification.services import award_comeback_bonus
+        tx = award_comeback_bonus(self.student)
+        self.assertIsNone(tx)

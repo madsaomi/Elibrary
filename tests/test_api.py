@@ -4,6 +4,7 @@ from rest_framework import status
 
 from apps.accounts.models import User
 from apps.schools.models import District, School, Class
+from apps.catalog.models import RegularBook
 from apps.accounts.services import create_user
 
 
@@ -140,8 +141,91 @@ class LoanAPITest(TestCase):
             'textbook_ids': [str(self.textbook.id)],
         }, format='json')
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(len(resp.data), 1)
+        if isinstance(resp.data, dict):
+            self.assertIn('loans', resp.data)
+            self.assertEqual(len(resp.data['loans']), 1)
+        else:
+            self.assertEqual(len(resp.data), 1)
+
+    def test_issue_textbook_no_stock(self):
+        self.stock.available_copies = 0
+        self.stock.save()
+        resp = self.client.post('/api/v1/textbook-loans/issue/', {
+            'student_id': str(self.student.id),
+            'textbook_ids': [str(self.textbook.id)],
+        }, format='json')
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(resp.data['loans']), 0)
+        self.assertEqual(len(resp.data['skipped']), 1)
+        self.assertEqual(resp.data['skipped'][0]['reason'], 'no_stock')
 
     def test_list_loans(self):
         resp = self.client.get('/api/v1/textbook-loans/')
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+
+class QRTokenTest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.district = District.objects.create(name='Test District')
+        self.school = School.objects.create(name='Test School', district=self.district)
+        self.admin, self.admin_pwd = create_user(
+            role=User.Role.SCHOOL_ADMIN, first_name='Admin', last_name='User',
+            school=self.school,
+        )
+        self.student, self.student_pwd = create_user(
+            role=User.Role.STUDENT, first_name='Student', last_name='User',
+            school=self.school,
+        )
+        self.book = RegularBook.objects.create(
+            title='Test Book', author='Author', school=self.school,
+            total_copies=3, available_copies=3,
+        )
+
+    def test_qr_token_generate_and_validate(self):
+        from apps.loans.services import generate_qr_token, validate_qr_token
+        payload = {'school_id': str(self.school.id), 'user_id': str(self.student.id), 'book_ids': [str(self.book.id)]}
+        token = generate_qr_token(payload, ttl_seconds=120)
+        self.assertIn('.', token)
+        result = validate_qr_token(token)
+        self.assertIsNotNone(result)
+        self.assertEqual(result['school_id'], str(self.school.id))
+
+    def test_qr_token_expired(self):
+        from apps.loans.services import generate_qr_token, validate_qr_token
+        payload = {'school_id': str(self.school.id), 'user_id': str(self.student.id), 'book_ids': []}
+        token = generate_qr_token(payload, ttl_seconds=-1)
+        result = validate_qr_token(token)
+        self.assertIsNone(result)
+
+    def test_qr_token_invalid(self):
+        from apps.loans.services import validate_qr_token
+        result = validate_qr_token('invalid.token.here')
+        self.assertIsNone(result)
+
+    def test_create_issue_token(self):
+        from apps.loans.services import create_issue_token
+        token = create_issue_token(self.school.id, str(self.student.id), [str(self.book.id)])
+        self.assertTrue(token)
+
+    def test_student_cannot_access_other_school_challenge(self):
+        from apps.gamification.models import Challenge
+        other_school = School.objects.create(name='Other School', district=self.district)
+        other_student, other_pwd = create_user(
+            role=User.Role.STUDENT, first_name='Other', last_name='Student',
+            school=other_school,
+        )
+        challenge = Challenge.objects.create(
+            grade_number=5, language='ru',
+            week_start='2025-01-01',
+            school=other_school, status=Challenge.Status.PUBLISHED,
+            questions=[{'question': 'Q', 'options': ['A', 'B', 'C'], 'correct_index': 0}] * 15,
+        )
+        resp = self.client.post('/api/v1/auth/login/', {
+            'login': self.student.login, 'password': self.student_pwd,
+        }, format='json')
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {resp.data["access"]}')
+        resp = self.client.post('/api/v1/challenge-attempts/start/', {
+            'challenge_id': str(challenge.id),
+        }, format='json')
+        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)

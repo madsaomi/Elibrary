@@ -35,3 +35,13 @@ class IsOwnerOrSchoolAdmin(permissions.BasePermission):
             return school == request.user.school
         user_field = getattr(obj, 'user', None) or getattr(obj, 'student', None)
         return user_field == request.user
+
+
+class IsLoanReaderOrAdmin(permissions.BasePermission):
+    """Students/teachers can read (list/retrieve), only admins can write."""
+    def has_permission(self, request, view):
+        if not request.user.is_authenticated:
+            return False
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return request.user.role in ('superadmin', 'school_admin')

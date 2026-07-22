@@ -6,7 +6,7 @@
 <div class="page-header">
     <h1><i data-lucide="log-in" class="icon-inline"></i> {% blocktranslate %}Принять учебники — {{ student.last_name }} {{ student.first_name }}{% endblocktranslate %}</h1>
 </div>
-<p class="text-muted mb-4" style="font-size: 0.95rem;">
+<p class="text-muted mb-4 text-095">
     <strong>{{ student.last_name }} {{ student.first_name }}</strong> · {% if student.grade %}{{ student.grade }}{% else %}{% trans "без класса" %}{% endif %}
 </p>
 <form method="post" onsubmit="return confirm('{% trans "Подтвердите приём учебников" %}')">
@@ -37,10 +37,10 @@
         <button type="submit" class="btn btn-primary" id="returnSubmitBtn"><i data-lucide="log-in" class="icon-inline"></i> {% trans "Принять выбранные" %}</button>
     </div>
     
-    <div class="card p-3" style="background: var(--color-danger-light); border: 1px solid var(--danger);">
-        <label class="flex items-center gap-sm mb-1" style="font-size: 0.95rem;">
+    <div class="card p-3 bg-danger-light border-danger">
+        <label class="flex items-center gap-sm mb-1 text-095">
             <input type="checkbox" name="forced" value="1" onchange="toggleReturnMode(this)">
-            <strong style="color: var(--danger);">{% trans "Принудительный возврат" %}</strong>
+            <strong class="color-danger">{% trans "Принудительный возврат" %}</strong>
         </label>
         <p class="text-muted text-sm m-0">{% trans "Используется только когда самообслуживание через QR-код невозможно. Операция будет помечена в логе." %}</p>
     </div>

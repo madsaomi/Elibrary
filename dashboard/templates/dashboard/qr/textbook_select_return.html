@@ -8,14 +8,14 @@
     <div class="card max-w-600">
         <p class="text-muted mb-2">{% trans "Отметьте учебники для возврата:" %}</p>
         {% for loan in textbook_loans %}
-        <label class="flex items-center gap-sm p-1 border-bottom" style="font-size: 0.875rem;">
+        <label class="flex items-center gap-sm p-1 border-bottom text-09">
             <input type="checkbox" name="loan_ids" value="{{ loan.id }}">
             <strong>{{ loan.textbook.title }}</strong>
             <span class="badge badge-info">{{ loan.textbook.subject }}</span>
             <span class="text-muted">{% trans "до" %} {{ loan.due_date|date:'d.m.Y' }}</span>
         </label>
         {% empty %}
-        <div class="empty-state" style="padding: 1.5rem;"><div class="icon" style="font-size: 2rem;"><i data-lucide="book" class="icon-3xl"></i></div><h3>{% trans "Нет учебников для возврата" %}</h3><p>{% trans "У вас нет активных выдач учебников." %}</p></div>
+        <div class="empty-state p-15"><div class="icon text-2xl"><i data-lucide="book" class="icon-3xl"></i></div><h3>{% trans "Нет учебников для возврата" %}</h3><p>{% trans "У вас нет активных выдач учебников." %}</p></div>
         {% endfor %}
         {% if textbook_loans %}
         <button type="submit" class="btn btn-primary mt-2">{% trans "Сгенерировать QR" %}</button>

@@ -10,21 +10,21 @@
 {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
 
 <div class="card p-3 mb-3">
-    <div class="flex items-center gap-md" style="flex-wrap:wrap;">
+    <div class="flex items-center gap-md flex-wrap">
         <form method="post" class="flex items-center gap-sm">
             {% csrf_token %}
             <input type="hidden" name="action" value="district">
-            <i data-lucide="map-pin" class="icon-inline text-muted" style="width:18px;height:18px;"></i>
-            <input type="text" name="name" class="form-input" placeholder="{% trans 'Название района' %}" required style="width:180px;">
+            <i data-lucide="map-pin" class="icon-md text-muted"></i>
+            <input type="text" name="name" class="form-input w-180" placeholder="{% trans 'Название района' %}" required>
             <button type="submit" class="btn btn-primary btn-sm">{% trans "Добавить район" %}</button>
         </form>
-        <span class="text-muted" style="font-size:0.85rem;">|</span>
+        <span class="divider-text">|</span>
         <form method="post" class="flex items-center gap-sm">
             {% csrf_token %}
             <input type="hidden" name="action" value="school">
-            <i data-lucide="plus" class="icon-inline text-muted" style="width:18px;height:18px;"></i>
-            <input type="text" name="name" class="form-input" placeholder="{% trans 'Название школы' %}" required style="width:200px;">
-            <select name="district_id" class="form-input" required style="width:160px;">
+            <i data-lucide="plus" class="icon-md text-muted"></i>
+            <input type="text" name="name" class="form-input w-200" placeholder="{% trans 'Название школы' %}" required>
+            <select name="district_id" class="form-input w-160" required>
                 <option value="">{% trans "Район..." %}</option>
                 {% for d in districts %}
                 <option value="{{ d.id }}">{{ d.name }}</option>
@@ -40,22 +40,22 @@
 {% for group in schools_by_district %}
 <div class="card p-3 mb-2">
     <div class="flex items-center gap-sm mb-2">
-        <i data-lucide="map-pin" class="icon-inline" style="width:18px;height:18px;color:var(--color-primary);"></i>
-        <h2 class="m-0" style="font-size:1.1rem;font-weight:700;">{{ group.grouper.name }}</h2>
-        <span class="badge badge-info" style="font-size:0.75rem;">{{ group.list|length }}</span>
+        <i data-lucide="map-pin" class="icon-md color-primary"></i>
+        <h2 class="m-0 text-11 font-bold">{{ group.grouper.name }}</h2>
+        <span class="badge badge-info text-075">{{ group.list|length }}</span>
     </div>
     {% if group.list %}
-    <div class="flex flex-column gap-xs">
+    <div class="flex flex-col gap-xs">
         {% for s in group.list %}
-        <div class="flex items-center gap-sm" style="padding:0.35rem 0.75rem;border-radius:var(--radius-sm);background:var(--color-surface);border:1px solid var(--color-border);">
-            <i data-lucide="building-2" class="icon-inline text-muted" style="width:16px;height:16px;"></i>
-            <span style="flex:1;font-weight:500;">{{ s.name }}</span>
-            <span class="text-muted" style="font-size:0.85rem;">{{ s.student_count }} {% trans "уч." %}</span>
+        <div class="school-row">
+            <i data-lucide="building-2" class="icon-sm text-muted"></i>
+            <span class="school-row-name">{{ s.name }}</span>
+            <span class="text-muted text-085">{{ s.student_count }} {% trans "уч." %}</span>
         </div>
         {% endfor %}
     </div>
     {% else %}
-    <p class="text-muted m-0" style="font-size:0.9rem;">{% trans "Нет школ в районе" %}</p>
+    <p class="text-muted m-0 text-09">{% trans "Нет школ в районе" %}</p>
     {% endif %}
 </div>
 {% empty %}

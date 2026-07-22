@@ -77,8 +77,9 @@ def award_comeback_bonus(user, school=None):
         school = user.school
     tx = XPTransaction.objects.create(user=user, amount=bonus_amount, reason=XPTransaction.Reason.COMEBACK_BONUS, school=school)
     user_level, _ = UserLevel.objects.get_or_create(user=user, defaults={'level': Level.objects.first() or Level.objects.create(number=1, xp_required=0, bonus_percent=0)})
-    user_level.total_xp += bonus_amount
-    user_level.save()
+    from django.db.models import F
+    UserLevel.objects.filter(pk=user_level.pk).update(total_xp=F('total_xp') + bonus_amount)
+    user_level.refresh_from_db()
     update_user_level(user_level)
     return tx
 

@@ -18,9 +18,9 @@
         {% endif %}
         <div class="mb-2">
             <label class="form-label">{% trans "Классы" %}</label>
-            <div class="overflow-auto" style="max-height: 150px; border: 1px solid var(--border); border-radius: var(--radius); padding: 0.5rem;">
+            <div class="book-list" style="max-height:150px;">
                 {% for cls in classes %}
-                <label class="flex items-center gap-sm p-1" style="font-size: 0.875rem;">
+                <label class="book-list-label">
                     <input type="checkbox" name="class_ids" value="{{ cls.id }}">
                     {{ cls }}
                 </label>
@@ -29,14 +29,17 @@
         </div>
         <div class="mb-2">
             <label class="form-label">{% trans "Учебники (на 7 дней)" %}</label>
-            <div class="overflow-auto" style="max-height: 200px; border: 1px solid var(--border); border-radius: var(--radius); padding: 0.5rem;">
+            <div class="book-list" style="max-height:200px;">
                 {% for tb in textbooks %}
-                <label class="flex items-center gap-sm p-1" style="font-size: 0.875rem;">
+                <label class="book-list-label">
                     <input type="checkbox" name="textbook_ids" value="{{ tb.id }}">
                     {{ tb.title }} ({{ tb.subject }}, {{ tb.grade_number }} {% trans "кл." %})
                 </label>
                 {% empty %}
-                <div class="empty-state" style="padding: 2rem;"><div class="icon" style="font-size: 2rem;"><i data-lucide="book-open" class="icon-inline"></i></div><h3>{% trans "Нет учебников" %}</h3></div>
+                <div class="book-list-empty">
+                    <div class="icon"><i data-lucide="book-open" class="icon-inline"></i></div>
+                    <h3>{% trans "Нет учебников" %}</h3>
+                </div>
                 {% endfor %}
             </div>
         </div>

@@ -6,13 +6,13 @@ from apps.accounts.models import User
 from apps.loans.models import TextbookLoan, RegularBookLoan
 from apps.loans.serializers import TextbookLoanSerializer, RegularBookLoanSerializer
 from apps.loans.services import issue_textbooks, return_textbooks, issue_books, return_books as return_books_service, create_issue_token, process_qr_issue, process_qr_return
-from api.v1.permissions import IsSchoolAdminOrSuperAdmin
+from api.v1.permissions import IsSchoolAdminOrSuperAdmin, IsLoanReaderOrAdmin
 
 
 class TextbookLoanViewSet(viewsets.ModelViewSet):
     queryset = TextbookLoan.objects.all()
     serializer_class = TextbookLoanSerializer
-    permission_classes = [IsSchoolAdminOrSuperAdmin]
+    permission_classes = [IsLoanReaderOrAdmin]
 
     def get_queryset(self):
         qs = TextbookLoan.objects.all()
@@ -31,7 +31,12 @@ class TextbookLoanViewSet(viewsets.ModelViewSet):
             student = User.objects.get(id=student_id, school=request.user.school)
         except User.DoesNotExist:
             return Response({'error': 'Ученик не найден в вашей школе'}, status=status.HTTP_404_NOT_FOUND)
-        loans = issue_textbooks(request.user.school, student, textbook_ids, request.user)
+        loans, skipped = issue_textbooks(request.user.school, student, textbook_ids, request.user)
+        if skipped:
+            return Response({
+                'loans': TextbookLoanSerializer(loans, many=True).data,
+                'skipped': skipped,
+            }, status=status.HTTP_201_CREATED)
         return Response(TextbookLoanSerializer(loans, many=True).data, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['post'])
@@ -45,7 +50,7 @@ class TextbookLoanViewSet(viewsets.ModelViewSet):
 class RegularBookLoanViewSet(viewsets.ModelViewSet):
     queryset = RegularBookLoan.objects.all()
     serializer_class = RegularBookLoanSerializer
-    permission_classes = [IsSchoolAdminOrSuperAdmin]
+    permission_classes = [IsLoanReaderOrAdmin]
 
     def get_queryset(self):
         qs = RegularBookLoan.objects.all()
@@ -64,7 +69,12 @@ class RegularBookLoanViewSet(viewsets.ModelViewSet):
             user = User.objects.get(id=user_id, school=request.user.school)
         except User.DoesNotExist:
             return Response({'error': 'Пользователь не найден в вашей школе'}, status=status.HTTP_404_NOT_FOUND)
-        loans = issue_books(request.user.school, user, book_ids, request.user)
+        loans, skipped = issue_books(request.user.school, user, book_ids, request.user)
+        if skipped:
+            return Response({
+                'loans': RegularBookLoanSerializer(loans, many=True).data,
+                'skipped': skipped,
+            }, status=status.HTTP_201_CREATED)
         return Response(RegularBookLoanSerializer(loans, many=True).data, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['post'])

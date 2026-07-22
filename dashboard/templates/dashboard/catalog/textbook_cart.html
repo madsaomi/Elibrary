@@ -4,14 +4,14 @@
 {% block dashboard_content %}
 <div class="fade-in-up">
 <div class="page-header">
-    <h1><i data-lucide="shopping-cart" class="icon-xl icon-primary"></i> {% trans "Корзина учебников" %} <span class="badge badge-info" style="font-size:1rem;">{{ textbooks|length }}</span></h1>
+    <h1><i data-lucide="shopping-cart" class="icon-xl icon-primary"></i> {% trans "Корзина учебников" %} <span class="badge badge-info text-1">{{ textbooks|length }}</span></h1>
     <a href="{% url 'dashboard:student_catalog' %}" class="btn btn-outline btn-sm"><i data-lucide="arrow-left" class="icon-sm"></i> {% trans "В каталог" %}</a>
 </div>
 
 {% if textbooks %}
 <form method="post">
     {% csrf_token %}
-    <div class="student-list card" style="padding:0.5rem;">
+    <div class="student-list card p-05">
         {% for tb in textbooks %}
         <div class="student-row">
             <span class="avatar avatar-sm"><i data-lucide="book" class="icon-sm"></i></span>

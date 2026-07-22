@@ -12,7 +12,7 @@ class News(UUIDPrimaryKeyMixin, TimestampMixin, models.Model):
     content = models.TextField(verbose_name='Содержание')
     author = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='news_author', verbose_name='Автор')
     author_level = models.CharField(max_length=20, choices=AuthorLevel.choices, verbose_name='Уровень автора')
-    school = models.ForeignKey('schools.School', on_delete=models.CASCADE, null=True, blank=True, related_name='school_news', verbose_name='Школа')
+    school = models.ForeignKey('schools.School', on_delete=models.CASCADE, null=True, blank=True, db_index=True, related_name='school_news', verbose_name='Школа')
     is_published = models.BooleanField(default=False, verbose_name='Опубликовано')
     published_at = models.DateTimeField(null=True, blank=True, verbose_name='Дата публикации')
 

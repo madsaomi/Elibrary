@@ -101,7 +101,7 @@ class TransferLog(UUIDPrimaryKeyMixin, TimestampMixin, models.Model):
     from_grade = models.ForeignKey('Class', on_delete=models.SET_NULL, null=True, blank=True, related_name='transfers_from', verbose_name='Из класса')
     to_school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='transfers_in', verbose_name='В школу', null=True, blank=True)
     initiated_by = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, related_name='initiated_transfers', verbose_name='Инициировал')
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING, verbose_name='Статус')
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING, db_index=True, verbose_name='Статус')
     completed_at = models.DateTimeField(null=True, blank=True, verbose_name='Дата завершения')
     xp_before = models.IntegerField(default=0, verbose_name='XP до перевода')
     xp_after = models.IntegerField(default=0, verbose_name='XP после перевода')

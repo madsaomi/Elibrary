@@ -113,32 +113,36 @@ def validate_qr_token(token: str):
 
 
 @transaction.atomic
-def issue_textbooks(school, student, textbook_ids, issued_by):
+def issue_textbooks(school, student, textbook_ids, issued_by, borrower_type=None):
     from apps.catalog.models import TextbookStock
     from apps.loans.models import TextbookLoan
     from django.utils import timezone
     if not textbook_ids:
-        return []
+        return [], []
     stocks = list(TextbookStock.objects.filter(school=school, textbook_id__in=textbook_ids).select_for_update())
     stock_map = {str(s.textbook_id): s for s in stocks}
     loans = []
+    skipped = []
     for tb_id in textbook_ids:
         stock = stock_map.get(str(tb_id))
         if not stock or stock.available_copies < 1:
+            skipped.append({'textbook_id': tb_id, 'reason': 'no_stock'})
             continue
         existing = TextbookLoan.objects.filter(student=student, textbook_id=tb_id, status__in=[TextbookLoan.Status.ACTIVE, TextbookLoan.Status.OVERDUE]).exists()
         if existing:
+            skipped.append({'textbook_id': tb_id, 'reason': 'already_issued'})
             continue
         due = (timezone.now().date() + timezone.timedelta(days=7 if issued_by.role == User.Role.TEACHER else 365))
+        bt = borrower_type or ('teacher' if issued_by.role == User.Role.TEACHER else 'student')
         loan = TextbookLoan.objects.create(
             textbook_id=tb_id, student=student, issued_by=issued_by,
             due_date=due, status=TextbookLoan.Status.ACTIVE,
-            school=school, borrower_type='teacher' if issued_by.role == User.Role.TEACHER else 'student',
+            school=school, borrower_type=bt,
         )
         stock.available_copies -= 1
         stock.save()
         loans.append(loan)
-    return loans
+    return loans, skipped
 
 
 @transaction.atomic
@@ -169,9 +173,11 @@ def return_textbooks(loan_ids, returned_by, forced=False):
 @transaction.atomic
 def issue_books(school, user, book_ids, issued_by):
     loans = []
+    skipped = []
     for bk_id in book_ids:
         book = RegularBook.objects.filter(school=school, id=bk_id).select_for_update().first()
         if not book or book.available_copies < 1:
+            skipped.append({'book_id': bk_id, 'reason': 'no_stock'})
             continue
         book.available_copies -= 1
         book.save()
@@ -179,7 +185,7 @@ def issue_books(school, user, book_ids, issued_by):
             school=school, book=book, user=user, issued_by=issued_by,
         )
         loans.append(loan)
-    return loans
+    return loans, skipped
 
 
 @transaction.atomic
@@ -229,9 +235,9 @@ def process_qr_issue(token, librarian):
     item_type = payload['item_type']
     item_ids = payload['item_ids']
     if item_type == 'textbook':
-        loans = issue_textbooks(librarian.school, user, item_ids, librarian)
+        loans, skipped = issue_textbooks(librarian.school, user, item_ids, librarian)
     else:
-        loans = issue_books(librarian.school, user, item_ids, librarian)
+        loans, skipped = issue_books(librarian.school, user, item_ids, librarian)
     return loans, None
 
 

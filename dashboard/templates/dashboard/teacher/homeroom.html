@@ -8,7 +8,7 @@
 </div>
 
 {% for cls in classes %}
-<h2 class="mb-2 {% if not forloop.first %}mt-4{% endif %}"><i data-lucide="school" class="icon-inline"></i> {{ cls }} <span class="text-muted" style="font-size: 1rem; font-weight: normal;">— {{ cls.school.name }}</span></h2>
+<h2 class="mb-2 {% if not forloop.first %}mt-4{% endif %}"><i data-lucide="school" class="icon-inline"></i> {{ cls }} <span class="text-muted text-1 font-normal">— {{ cls.school.name }}</span></h2>
 <div class="table-wrap mb-4">
     <table>
         <thead>
@@ -33,7 +33,7 @@
 </div>
 {% empty %}
 <div class="card text-center text-muted p-4">
-    <div style="font-size: 2rem; margin-bottom: 1rem;"><i data-lucide="book-open-check" class="icon-3xl icon-primary"></i></div>
+    <div class="text-2xl mb-2"><i data-lucide="book-open-check" class="icon-3xl icon-primary"></i></div>
     {% trans "У вас нет прикреплённых классов" %}
 </div>
 {% endfor %}

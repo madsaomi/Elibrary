@@ -8,10 +8,10 @@
         {% blocktranslate %}Выбрано книг для возврата: <strong>{{ selected_count }}</strong>{% endblocktranslate %}
     </p>
     <div id="qrcode" class="flex justify-center mb-2"></div>
-    <p class="text-muted text-sm" style="word-break: break-all;">
+    <p class="text-muted text-sm" style="word-break:break-all;">
         {% trans "Токен:" %} <code>{{ token }}</code>
     </p>
-    <p class="text-sm" style="color: var(--danger);">{% trans "Действителен 2 минуты" %}</p>
+    <p class="text-sm color-danger">{% trans "Действителен 2 минуты" %}</p>
 </div>
 {% endblock %}
 {% block extra_scripts %}

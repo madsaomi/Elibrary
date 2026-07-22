@@ -18,29 +18,29 @@
 {% for school in schools %}
 <div class="card p-3 mb-2">
     <div class="flex items-center gap-sm mb-2">
-        <i data-lucide="building-2" class="icon-inline" style="width:18px;height:18px;color:var(--color-primary);"></i>
-        <h2 class="m-0" style="font-size:1.1rem;font-weight:700;">{{ school.name }}</h2>
-        <span class="text-muted" style="font-size:0.85rem;">{{ school.district.name }}</span>
+        <i data-lucide="building-2" class="icon-md color-primary"></i>
+        <h2 class="m-0 text-11 font-bold">{{ school.name }}</h2>
+        <span class="text-muted text-085">{{ school.district.name }}</span>
     </div>
     {% for a in admins %}
     {% if a.school_id == school.id %}
-    <div class="flex items-center gap-sm" style="padding:0.5rem 0.75rem;border-radius:var(--radius-sm);background:var(--color-surface);border:1px solid var(--color-border);">
-        <div class="avatar" style="width:2rem;height:2rem;font-size:0.8rem;">{{ a.first_name|first }}{{ a.last_name|first }}</div>
-        <div style="flex:1;">
-            <div style="font-weight:500;">{{ a.last_name }} {{ a.first_name }}</div>
-            <div class="text-muted" style="font-size:0.8rem;">{{ a.login }}</div>
+    <div class="admin-row mb-1">
+        <div class="avatar avatar-sm">{{ a.first_name|first }}{{ a.last_name|first }}</div>
+        <div class="admin-info">
+            <div class="admin-name">{{ a.last_name }} {{ a.first_name }}</div>
+            <div class="admin-login">{{ a.login }}</div>
         </div>
-        <form method="post" style="display:inline;">
+        <form method="post" class="d-inline">
             {% csrf_token %}
             <input type="hidden" name="user_id" value="{{ a.id }}">
             <input type="hidden" name="action" value="reset_password">
-            <button type="submit" class="btn btn-outline" style="font-size:0.85rem;padding:0.4rem 0.75rem;"><i data-lucide="key-round" class="icon-inline" style="width:14px;height:14px;"></i> {% trans "Сброс пароля" %}</button>
+            <button type="submit" class="btn btn-outline btn-xs"><i data-lucide="key-round" class="icon-2xs"></i> {% trans "Сброс пароля" %}</button>
         </form>
-        <form method="post" style="display:inline-flex;gap:0.35rem;align-items:center;">
+        <form method="post" class="d-inline-flex gap-035 items-center">
             {% csrf_token %}
             <input type="hidden" name="user_id" value="{{ a.id }}">
             <input type="hidden" name="action" value="transfer">
-            <select name="new_school_id" class="form-input" style="width:160px;padding:0.4rem 0.5rem;font-size:0.85rem;">
+            <select name="new_school_id" class="form-input w-160 form-input-sm">
                 <option value="">{% trans "Перевести в школу..." %}</option>
                 {% for s in schools %}
                 {% if s.id != school.id %}
@@ -48,20 +48,20 @@
                 {% endif %}
                 {% endfor %}
             </select>
-            <button type="submit" class="btn btn-primary" style="font-size:0.85rem;padding:0.4rem 0.75rem;"><i data-lucide="arrow-right" class="icon-inline" style="width:14px;height:14px;"></i></button>
+            <button type="submit" class="btn btn-primary btn-xs"><i data-lucide="arrow-right" class="icon-2xs"></i></button>
         </form>
     </div>
     {% endif %}
     {% endfor %}
 
     {% if school.admin_count == 0 %}
-    <div class="flex items-center gap-sm" style="padding:0.5rem 0.75rem;border-radius:var(--radius-sm);background:var(--color-surface);border:1px dashed var(--color-border);">
-        <span class="text-muted" style="flex:1;font-size:0.9rem;">{% trans "Нет администратора" %}</span>
-        <form method="post" style="display:inline;">
+    <div class="admin-row-empty">
+        <span class="text-muted flex-1 text-09">{% trans "Нет администратора" %}</span>
+        <form method="post" class="d-inline">
             {% csrf_token %}
             <input type="hidden" name="school_id" value="{{ school.id }}">
             <input type="hidden" name="action" value="create">
-            <button type="submit" class="btn btn-primary" style="font-size:0.85rem;padding:0.4rem 0.75rem;"><i data-lucide="plus" class="icon-inline" style="width:14px;height:14px;"></i> {% trans "Создать" %}</button>
+            <button type="submit" class="btn btn-primary btn-xs"><i data-lucide="plus" class="icon-2xs"></i> {% trans "Создать" %}</button>
         </form>
     </div>
     {% endif %}

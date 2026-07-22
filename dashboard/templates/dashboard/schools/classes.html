@@ -30,16 +30,14 @@
 {% regroup classes by school as school_groups %}
 {% for group in school_groups %}
 <div class="card mb-3">
-    <div class="card-header" style="padding:0.75rem 1rem;border-bottom:1px solid var(--color-border);">
-        <h3 class="mb-0" style="font-size:1rem;">
-            {% if group.grouper %}{{ group.grouper.name }}{% else %}{% trans "Все классы" %}{% endif %}
-        </h3>
+    <div class="card-header">
+        <h3>{% if group.grouper %}{{ group.grouper.name }}{% else %}{% trans "Все классы" %}{% endif %}</h3>
     </div>
-    <div style="overflow-x:auto;">
+    <div class="overflow-x-auto">
         <table class="table-compact" id="classes-table">
             <thead>
                 <tr>
-                    <th style="width:30px;"></th>
+                    <th class="w-30"></th>
                     <th>{% trans "Класс" %}</th>
                     <th>{% trans "Язык" %}</th>
                     <th>{% trans "Год" %}</th>
@@ -51,11 +49,11 @@
             <tbody>
                 {% for cls in group.list %}
                 {% with cls_id=cls.id|stringformat:'s' %}{% with students=students_by_class|dictlookup:cls_id %}
-                <tr class="class-row" data-class-id="{{ cls.id }}" onclick="toggleStudents('{{ cls.id }}')" style="cursor:pointer;">
+                <tr class="class-row" data-class-id="{{ cls.id }}" onclick="toggleStudents('{{ cls.id }}')" class="cursor-pointer">
                     <td><i data-lucide="chevron-right" class="icon-sm chevron" id="chevron-{{ cls.id }}"></i></td>
                     <td><strong>{{ cls.number }}{{ cls.parallel }}</strong></td>
                     <td><span class="badge badge-info">{{ cls.get_language_display }}</span></td>
-                    <td style="font-size:0.875rem;">{{ cls.academic_year }}</td>
+                    <td class="text-09">{{ cls.academic_year }}</td>
                     <td>{{ students|length }}</td>
                     <td><span class="badge badge-{% if cls.status == 'active' %}success{% else %}warning{% endif %}">{{ cls.get_status_display }}</span></td>
                     <td class="text-right">
@@ -63,23 +61,23 @@
                     </td>
                 </tr>
                 <tr class="students-row" id="students-{{ cls.id }}" style="display:none;">
-                    <td colspan="7" style="padding:0;">
-                        <div style="padding:0.75rem 1rem 1rem 2.5rem;background:var(--bg-tertiary);">
+                    <td colspan="7" class="p-0">
+                        <div class="students-expand">
                             <div class="flex items-end gap-sm mb-2 flex-wrap">
                                 <form method="post" action="{% url 'dashboard:class_add_student' cls.id %}" class="flex items-end gap-sm flex-wrap">
                                     {% csrf_token %}
                                     <div>
-                                        <label style="font-size:0.75rem;color:var(--color-text-muted);display:block;">{% trans "Логин" %}</label>
-                                        <input type="text" name="login" class="form-input" placeholder="{% trans 'логин' %}" style="padding:0.3rem 0.5rem;font-size:0.8125rem;">
+                                        <label class="form-label-xs">{% trans "Логин" %}</label>
+                                        <input type="text" name="login" class="form-input form-input-sm" placeholder="{% trans 'логин' %}">
                                     </div>
-                                    <span style="font-size:0.75rem;color:var(--color-text-muted);padding-bottom:0.25rem;">{% trans "или" %}</span>
+                                    <span class="text-075 color-muted pb-025">{% trans "или" %}</span>
                                     <div>
-                                        <label style="font-size:0.75rem;color:var(--color-text-muted);display:block;">{% trans "Имя" %}</label>
-                                        <input type="text" name="first_name" class="form-input" placeholder="{% trans 'Имя' %}" style="padding:0.3rem 0.5rem;font-size:0.8125rem;">
+                                        <label class="form-label-xs">{% trans "Имя" %}</label>
+                                        <input type="text" name="first_name" class="form-input form-input-sm" placeholder="{% trans 'Имя' %}">
                                     </div>
                                     <div>
-                                        <label style="font-size:0.75rem;color:var(--color-text-muted);display:block;">{% trans "Фамилия" %}</label>
-                                        <input type="text" name="last_name" class="form-input" placeholder="{% trans 'Фамилия' %}" style="padding:0.3rem 0.5rem;font-size:0.8125rem;">
+                                        <label class="form-label-xs">{% trans "Фамилия" %}</label>
+                                        <input type="text" name="last_name" class="form-input form-input-sm" placeholder="{% trans 'Фамилия' %}">
                                     </div>
                                     <button type="submit" class="btn btn-primary btn-sm"><i data-lucide="user-plus" class="icon-sm"></i> {% trans "Добавить" %}</button>
                                 </form>
@@ -97,14 +95,14 @@
                                     {% for s in students %}
                                     <tr>
                                         <td><strong>{{ s.last_name }} {{ s.first_name }}</strong></td>
-                                        <td style="color:var(--color-text-muted);font-size:0.875rem;">{{ s.login }}</td>
+                                        <td class="text-muted text-09">{{ s.login }}</td>
                                         <td class="text-right">
                                             <a href="{% url 'dashboard:issue_textbooks' %}?student_id={{ s.id }}" class="btn btn-sm btn-ghost" title="{% trans 'Выдать' %}"><i data-lucide="send" class="icon-sm"></i></a>
 
-                                            <form method="post" action="{% url 'dashboard:class_transfer_student' cls.id %}" class="inline-form" style="display:inline;" onsubmit="return confirm('{% trans "Перевести ученика в другой класс?" %}')">
+                                            <form method="post" action="{% url 'dashboard:class_transfer_student' cls.id %}" class="inline-form d-inline" onsubmit="return confirm('{% trans "Перевести ученика в другой класс?" %}')">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="student_id" value="{{ s.id }}">
-                                                <select name="to_class_id" class="form-input" style="width:auto;display:inline;padding:0.2rem 0.4rem;font-size:0.75rem;" onchange="if(confirm('{% trans "Перевести ученика в другой класс?" %}')){this.form.submit()}">
+                                                <select name="to_class_id" class="form-input form-select-inline" onchange="if(confirm('{% trans "Перевести ученика в другой класс?" %}')){this.form.submit()}">
                                                     <option value="">{% trans "Перевести" %}</option>
                                                     {% for c in classes %}
                                                     {% if c.id != cls.id %}
@@ -114,7 +112,7 @@
                                                 </select>
                                             </form>
 
-                                            <form method="post" action="{% url 'dashboard:class_remove_student' cls.id %}" class="inline-form" style="display:inline;" onsubmit="return confirm('{% trans "Удалить ученика из класса?" %}')">
+                                            <form method="post" action="{% url 'dashboard:class_remove_student' cls.id %}" class="inline-form d-inline" onsubmit="return confirm('{% trans "Удалить ученика из класса?" %}')">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="student_id" value="{{ s.id }}">
                                                 <button type="submit" class="btn btn-sm btn-ghost" title="{% trans 'Удалить' %}"><i data-lucide="user-x" class="icon-sm"></i></button>
@@ -125,7 +123,7 @@
                                 </tbody>
                             </table>
                             {% else %}
-                            <p class="text-muted mb-0" style="font-size:0.875rem;">{% trans "В классе нет учеников" %}</p>
+                            <p class="text-muted mb-0 text-09">{% trans "В классе нет учеников" %}</p>
                             {% endif %}
                         </div>
                     </td>
@@ -142,7 +140,7 @@
 
 {% if not classes %}
 <div class="card">
-    <div class="empty-state" style="padding:3rem;text-align:center;">
+    <div class="empty-state p-3 text-center">
         <i data-lucide="school" class="icon-3xl icon-faded"></i>
         <h3 class="mt-2">{% trans "Нет классов" %}</h3>
         <p class="text-muted">{% trans "Создайте первый класс" %}</p>
@@ -153,22 +151,22 @@
 
 <div class="section-content" id="tab-young" style="display:none;">
 <div class="card mb-3">
-    <div class="card-header" style="padding:0.75rem 1rem;border-bottom:1px solid var(--color-border);">
-        <h3 class="mb-0" style="font-size:1rem;"><i data-lucide="baby" class="icon-sm"></i> {% trans "Младшие классы (1-4)" %}</h3>
+    <div class="card-header">
+        <h3><i data-lucide="baby" class="icon-sm"></i> {% trans "Младшие классы (1-4)" %}</h3>
     </div>
-    <div style="padding:1rem;">
+    <div class="p-2">
         <form method="post" action="{% url 'dashboard:manage_young_students' %}" class="flex items-end gap-sm flex-wrap mb-3 p-2" style="background:var(--bg-tertiary);border-radius:var(--radius);">
             {% csrf_token %}
             <div>
-                <label style="font-size:0.75rem;color:var(--color-text-muted);display:block;">{% trans "Фамилия" %}</label>
+                <label class="form-label-xs">{% trans "Фамилия" %}</label>
                 <input type="text" name="last_name" class="form-input" placeholder="{% trans 'Фамилия' %}" required>
             </div>
             <div>
-                <label style="font-size:0.75rem;color:var(--color-text-muted);display:block;">{% trans "Имя" %}</label>
+                <label class="form-label-xs">{% trans "Имя" %}</label>
                 <input type="text" name="first_name" class="form-input" placeholder="{% trans 'Имя' %}" required>
             </div>
             <div>
-                <label style="font-size:0.75rem;color:var(--color-text-muted);display:block;">{% trans "Класс" %}</label>
+                <label class="form-label-xs">{% trans "Класс" %}</label>
                 <select name="class_id" class="form-input" required>
                     {% for cls in classes %}{% if cls.number <= 4 %}
                     <option value="{{ cls.id }}">{{ cls.number }}{{ cls.parallel }}</option>
@@ -202,8 +200,8 @@
 
 <div class="section-content" id="tab-transfers" style="display:none;">
 <div class="card mb-3">
-    <div class="card-header" style="padding:0.75rem 1rem;border-bottom:1px solid var(--color-border);">
-        <h3 class="mb-0" style="font-size:1rem;"><i data-lucide="arrow-left-right" class="icon-sm"></i> {% trans "Переводы учеников между школами" %}</h3>
+    <div class="card-header">
+        <h3><i data-lucide="arrow-left-right" class="icon-sm"></i> {% trans "Переводы учеников между школами" %}</h3>
     </div>
     <div class="grid-2 gap-md p-3">
         <div class="card p-2">
@@ -303,10 +301,10 @@
 <div class="section-content" id="tab-promotion" style="display:none;">
 <div class="mb-3">
 <div class="card mb-3">
-    <div class="card-header" style="padding:0.75rem 1rem;border-bottom:1px solid var(--color-border);">
-        <h3 class="mb-0" style="font-size:1rem;"><i data-lucide="graduation-cap" class="icon-sm"></i> {% trans "Продвижение классов" %}</h3>
+    <div class="card-header">
+        <h3><i data-lucide="graduation-cap" class="icon-sm"></i> {% trans "Продвижение классов" %}</h3>
     </div>
-    <div style="padding:1rem;">
+    <div class="p-2">
         <p class="text-muted mb-2">
             {% blocktranslate %}Переводит все классы школы на следующий год обучения. 11-е классы получают статус "Выпускник". Операция необратима и защищена от повторного запуска.{% endblocktranslate %}
         </p>
@@ -315,11 +313,11 @@
             <div class="flex items-end gap-sm flex-wrap">
                 <div>
                     <label>{% trans "Текущий год" %}</label>
-                    <input type="text" name="current_year" value="{{ current_year }}" class="form-input" style="width:120px;" required>
+                    <input type="text" name="current_year" value="{{ current_year }}" class="form-input w-120" required>
                 </div>
                 <div>
                     <label>{% trans "Следующий год" %}</label>
-                    <input type="text" name="next_year" value="{{ next_year }}" class="form-input" style="width:120px;" required>
+                    <input type="text" name="next_year" value="{{ next_year }}" class="form-input w-120" required>
                 </div>
                 <button type="submit" class="btn btn-warning"><i data-lucide="rocket" class="icon-sm"></i> {% trans "Запустить" %}</button>
             </div>
@@ -328,10 +326,10 @@
 </div>
 
 <div class="card mb-3">
-    <div class="card-header" style="padding:0.75rem 1rem;border-bottom:1px solid var(--color-border);">
-        <h3 class="mb-0" style="font-size:1rem;"><i data-lucide="key" class="icon-sm"></i> {% trans "Активация доступа 5-го класса" %}</h3>
+    <div class="card-header">
+        <h3><i data-lucide="key" class="icon-sm"></i> {% trans "Активация доступа 5-го класса" %}</h3>
     </div>
-    <div style="padding:1rem;">
+    <div class="p-2">
         <p class="text-muted mb-2">
             {% blocktranslate %}Генерирует логины и пароли для учеников 5-х классов, которые ранее были записями без доступа (1-4 класс). Включает их в геймификацию.{% endblocktranslate %}
         </p>
@@ -341,8 +339,8 @@
 
 {% if promotions %}
 <div class="card">
-    <div class="card-header" style="padding:0.75rem 1rem;border-bottom:1px solid var(--color-border);">
-        <h3 class="mb-0" style="font-size:1rem;"><i data-lucide="clipboard-list" class="icon-sm"></i> {% trans "Журнал продвижений" %}</h3>
+    <div class="card-header">
+        <h3><i data-lucide="clipboard-list" class="icon-sm"></i> {% trans "Журнал продвижений" %}</h3>
     </div>
     <table class="table-compact">
         <thead><tr><th>{% trans "Год" %}</th><th>{% trans "Дата" %}</th><th>{% trans "Кто" %}</th></tr></thead>
@@ -407,19 +405,6 @@
         </form>
     </div>
 </div>
-
-<style>
-.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:1000; align-items:center; justify-content:center; }
-.modal-overlay.open { display:flex; }
-.modal-content { background:var(--bg-primary); border-radius:var(--radius-lg); box-shadow:0 8px 32px rgba(0,0,0,0.15); max-height:80vh; overflow-y:auto; width:90%; }
-.modal-header { padding:1rem 1.25rem; border-bottom:1px solid var(--color-border); }
-.inline-form { display:inline; }
-.section-bar { display:flex; gap:0; border-bottom:2px solid var(--color-border); overflow-x:auto; -webkit-overflow-scrolling:touch; }
-.section-link { padding:0.6rem 1rem; border:none; background:transparent; cursor:pointer; font-size:0.8125rem; color:var(--color-text-muted); border-bottom:2px solid transparent; margin-bottom:-2px; display:flex; align-items:center; gap:0.4rem; white-space:nowrap; flex-shrink:0; }
-.section-link.active { color:var(--color-primary); border-bottom-color:var(--color-primary); font-weight:600; }
-.section-link:hover { color:var(--color-primary); }
-.border-top { border-top:1px solid var(--color-border); }
-</style>
 
 <script>
 function toggleStudents(classId) {

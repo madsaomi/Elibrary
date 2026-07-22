@@ -6,25 +6,25 @@
 <div class="page-header">
     <h1 class="mb-05"><i data-lucide="user" class="icon-xl icon-primary"></i> {{ student.last_name }} {{ student.first_name }}</h1>
 </div>
-<p class="text-muted mb-3" style="font-size: 0.95rem;">
+<p class="text-muted mb-3 text-095">
     <span class="badge badge-info">{{ student.get_role_display }}</span> · <strong>{{ student.school.name }}</strong>
     {% if student.grade %}· {{ student.grade }}{% endif %}
 </p>
 
 <div class="grid-2 mb-4">
     {% if level_info %}
-    <div class="card card-hover" style="display: flex; align-items: center; gap: 1rem;">
-        <img src="{% static 'images/illustrations/level_badge.png' %}" alt="Level Badge" class="animate-float" style="width: 3.5rem; height: 3.5rem; object-fit: contain;">
+    <div class="card card-hover flex items-center gap-lg">
+        <img src="{% static 'images/illustrations/level_badge.png' %}" alt="Level Badge" class="animate-float" style="width:3.5rem;height:3.5rem;object-fit:contain;">
         <div>
-            <strong style="font-size: 1.1rem; display: block;">{% trans "Уровень:" %} {{ level_info.level.number }}</strong> 
-            <span class="badge badge-info mt-1" style="display:inline-block">XP: {{ level_info.total_xp }}</span>
+            <strong class="text-11 d-block">{% trans "Уровень:" %} {{ level_info.level.number }}</strong>
+            <span class="badge badge-info mt-1 d-inline-block">XP: {{ level_info.total_xp }}</span>
         </div>
     </div>
     {% endif %}
     {% if streak %}
     <div class="card card-hover">
-        <strong style="font-size: 1.1rem;">{% trans "Стрик:" %}</strong> {% blocktranslate %}{{ streak.current_streak }} дней{% endblocktranslate %} 
-        <span class="badge badge-warning mt-1" style="display:inline-block">❄️ {% blocktranslate %}{{ streak.frozen_days }} заморозок{% endblocktranslate %}</span>
+        <strong class="text-11">{% trans "Стрик:" %}</strong> {% blocktranslate %}{{ streak.current_streak }} дней{% endblocktranslate %}
+        <span class="badge badge-warning mt-1 d-inline-block">❄️ {% blocktranslate %}{{ streak.frozen_days }} заморозок{% endblocktranslate %}</span>
     </div>
     {% endif %}
 </div>
@@ -74,7 +74,10 @@
         {{ ua.achievement.icon_emoji|default:'trophy' }}
     </div>
     {% empty %}
-    <div class="empty-state" style="padding: 1rem;"><div class="icon" style="font-size: 2rem;">🏅</div><h3>{% trans "Нет достижений" %}</h3></div>
+    <div class="empty-state p-2 text-center">
+        <div class="icon text-2xl mb-1">🏅</div>
+        <h3>{% trans "Нет достижений" %}</h3>
+    </div>
     {% endfor %}
 </div>
 {% endif %}
